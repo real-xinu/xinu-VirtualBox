@@ -18,7 +18,7 @@ void	ttyhandle_in (
 	char	ch;			/* Next char from device	*/
 	int32	avail;			/* Chars available in buffer	*/
 
-	ch = csrptr->buffer;
+	ch = io_inb(csrptr->buffer);
 
 	/* Compute chars available */
 

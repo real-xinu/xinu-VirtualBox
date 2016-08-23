@@ -54,12 +54,12 @@ devcall	ttyinit(
 	uptr = (struct uart_csreg *)devptr->dvcsr;
 
 	/* Set baud rate */
-	uptr->lcr = UART_LCR_DLAB;
-	uptr->dlm = 0x00;
-	uptr->dll = 0x18;
+	io_outb(uptr->lcr, UART_LCR_DLAB);
+	io_outb(uptr->dlm, 0x00);
+	io_outb(uptr->dll, 0x18);
 
-	uptr->lcr = UART_LCR_8N1;	/* 8 bit char, No Parity, 1 Stop*/
-	uptr->fcr = 0x00;		/* Disable FIFO for now		*/
+	io_outb(uptr->lcr,UART_LCR_8N1);/* 8 bit char, No Parity, 1 Stop*/
+	io_outb(uptr->fcr, 0x00);	/* Disable FIFO for now		*/
 
 	/* Register the interrupt dispatcher for the tty device */
 
@@ -68,8 +68,8 @@ devcall	ttyinit(
 	/* Enable interrupts on the device: reset the transmit and	*/
 	/*   receive FIFOS, and set the interrupt trigger level		*/
 
-	uptr->fcr = UART_FCR_EFIFO | UART_FCR_RRESET |
-			UART_FCR_TRESET | UART_FCR_TRIG2;
+	io_outb(uptr->fcr, UART_FCR_EFIFO | UART_FCR_RRESET |
+			   UART_FCR_TRESET | UART_FCR_TRIG2);
 
 	/* Start the device */
 

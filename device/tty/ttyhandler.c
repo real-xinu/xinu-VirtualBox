@@ -11,8 +11,6 @@ void ttyhandler(void) {
 	struct	ttycblk	*typtr;		/* Pointer to ttytab entry	*/	
 	struct	uart_csreg *csrptr;	/* Address of UART's CSR	*/
 	byte	iir = 0;		/* Interrupt identification	*/
-	byte	lsr = 0;		/* Line status			*/
-
 
 	/* Get CSR address of the device (assume console for now) */
 
@@ -26,7 +24,7 @@ void ttyhandler(void) {
 	/* Decode hardware interrupt request from UART device */
 
         /* Check interrupt identification register */
-	iir = csrptr->iir;
+	iir = io_inb(csrptr->iir);
         if (iir & UART_IIR_IRQ) {
 		return;
         }
@@ -55,7 +53,7 @@ void ttyhandler(void) {
 
 		/* While chars avail. in UART buffer, call ttyinter_in	*/
 
-		while ( (csrptr->lsr & UART_LSR_DR) != 0) {
+		while ( (io_inb(csrptr->lsr) & UART_LSR_DR) != 0) {
 			ttyhandle_in(typtr, csrptr);
                 }
 

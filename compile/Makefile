@@ -1,7 +1,8 @@
 #########################################################################
 #									#
 #									#
-#  Makefile for the Intel Galileo version of the Xinu operating system	#
+#  Makefile for the VBOX version of Xinu, using as much as possible	#
+#			from the Galileo code				#
 #									#
 #  includes: .deps and .defs						#
 #									#
@@ -9,7 +10,7 @@
 #########################################################################
 
 COMPILER_ROOT	=	/usr/bin/
-PNAME		=	galileo
+PNAME		=	Vbox
 PLAT		=	Platform_$(PNAME)
 TOPDIR		=	..
 
@@ -43,7 +44,13 @@ REBUILDFLAGS	=	-s $(TOPDIR)/system  debug.c 	\
 			-s $(TOPDIR)/shell  'xsh_rdstest*'
 
 INCLUDE		=	-I$(TOPDIR)/include
-DEFS		= 	-DBSDURG -DVERSION=\""`cat $(VERSIONFILE)`"\"
+
+# Amount to move loaded image down in memory
+
+BRELOC  =	0x150000
+BOOTPLOC=	0x150000
+
+DEFS		= -DBRELOC=${BRELOC} -DBOOTPLOC=${BOOTPLOC} -DBSDURG -DVERSION=\""`cat $(VERSIONFILE)`"\"
 
 # Compiler flags
 CFLAGS  = -march=i586 -m32 -fno-builtin -fno-stack-protector -nostdlib -c -Wall -O0 ${DEFS} ${INCLUDE}
@@ -97,15 +104,16 @@ export
 # Specific additional rules and exceptions
 #--------------------------------------------------------------------------------
 
+# The following inserts 'echo' when run on xinu00
+ECHO$(MACHINE) = echo; echo "On Vbox, the following command would be run:  "
+
 xinu:	Makefile rebuild $(BLDDIRS) $(DEFSFILE) $(DEPSFILE) $(CONFH) $(CONFC) $(LD_LIST)
 	@echo;echo 'Loading object files to produce GRUB bootable xinu'
 	@$(LD) $(LDFLAGS) $(LD_LIST) -o $(XINU)
-	@echo;echo 'Building $(XINUBIN)'
-	@objcopy -O binary $(XINU) $(XINUBIN)
-	@echo;echo 'Building $(XINUXBIN)'
-	@$(MAKEXBIN) $(XINUBIN) $(XINUXBIN)
-	@rm -f $(XINUBIN)
+	@echo Copying xinu.elf to xinu.boot in the TFTP directory.
+	@$(ECHOxinu00) cp xinu.elf /srv/tftp/xinu.boot
 	@echo
+	
 
 $(BLDDIRS): 
 	@mkdir -p $(BLDDIRS)

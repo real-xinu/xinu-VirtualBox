@@ -34,7 +34,7 @@ tty:
 
 /* type of a ethernet device */
 eth:
-	on quark_eth
+	on e1000e
 		-i ethinit	-o ioerr	-c ioerr
 		-r ethread	-g ioerr	-p ioerr
 		-w ethwrite	-s ioerr	-n ethcontrol
@@ -55,16 +55,6 @@ ram:
 		-r ramread	-g ioerr	-p ioerr
 		-w ramwrite	-s ioerr	-n ioerr
 		-intr ionull
-
-/* type of SD memory card */
-/*
-sdmc:
-	on sd
-		-i sdmcinit	-o sdmcopen	-c sdmcclose
-		-r sdmcread	-g ioerr	-p ioerr
-		-w sdmcwrite	-s ioerr	-n ioerr
-		-intr sdmcdispatch
-*/
 
 /* type of a remote file system device */
 rfs:
@@ -112,13 +102,13 @@ nam:
 /*   will be present in the system					*/
 
    /* Define the console device to be a tty and specify CSR*/
-   CONSOLE is tty  on uart  csr 0001770 -irq 0052
+   CONSOLE is tty  on uart  csr 0001770 -irq 0044
 
    /* Define a null device */
    NULLDEV is null on nothing
 
    /* Physical Ethernet (raw packet transfer) */
-   ETHER0 is eth   on quark_eth csr 0 -irq 0053
+   ETHER0 is eth   on e1000e csr 0 -irq 0 */
 
    /* Define a namespace device */
    NAMESPACE is nam on top
@@ -159,11 +149,6 @@ nam:
    LFILE4 is lfl on lfs
    LFILE5 is lfl on lfs
    
-   /* Define a SD memory card device */
-   /*
-   SDMC is sdmc on sd csr 0 -irq 0051
-   */
-
 %%
 
 /* Configuration and Size Constants */
@@ -176,3 +161,8 @@ nam:
 #define CLKFREQ      200000000	/* 200 MHz clock			*/
 
 #define	LF_DISK_DEV	RAM0
+
+#ifndef	ETHER0
+#define	ETHER0	0
+#endif
+

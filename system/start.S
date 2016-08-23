@@ -44,38 +44,31 @@
  */
 
 #define	MULTIBOOT_HEADER_MAGIC  0x1BADB002
-#define	MULTIBOOT_HEADER_FLAGS  0x00010003
-#define MULTIBOOT_SIGNATURE	0x2BADB002	/* Multiboot signature verification	*/
-#define MULTIBOOT_BOOTINFO_MMAP	0x00000040	/* mmap_length mmap_addr valid		*/
-#define	GDT_ENTRIES		4
-#define	GDT_ENTRY_SIZE		8
-#define	GDT_BYTES		(GDT_ENTRIES * GDT_ENTRY_SIZE)
-#define	IDT_ENTRIES		256
-#define	IDT_ENTRY_SIZE		8
-#define	IDT_BYTES		(IDT_ENTRIES * IDT_ENTRY_SIZE)
-#define NULLSTK			(8192)		/* This must match NULLSTK defined in kernel.h 		*/
-
+#define	MULTIBOOT_HEADER_FLAGS  0x00000003
+#define	MULTIBOOT_SIGNATURE	0x2BADB002	/* Multiboot signature verification	*/
+#define	MULTIBOOT_BOOTINFO_MMAP	0x00000040	/* mmap_length mmap_addr valid		*/
 	.data
 
-	.align	16	
+	.align	16
 	.globl	gdt
-gdt:	.space	GDT_BYTES
-gdtr:	.word	(GDT_BYTES-1)		# sizeof _gdt -1 (in bytes)
-	.long	gdt			# global pointer to the gdt
-		
-	.align	16	        	
+	.globl	gdtr
 	.globl	idt
-idt:	.space	IDT_BYTES       	
-idtr:	.word	(IDT_BYTES-1)		# size of _idt -1 (in bytes)
-	.long	idt			# global pointer to the idt
+	.globl	idtr
+
+gdt:	.space	64	# must equal NGD*8 (64 = 8 segments)
+gdtr:	.word	63	# sizeof _gdt -1 (in bytes)
+	.long	gdt	# global pointer to the gdt
+idt:	.space	1024	# must equal NID*8 (1024 == 256 entries * 8 bytes per entry)
+idtr:	.word	1023	# size of _idt -1 (in bytes)
+	.long	idt
 
 	.globl	cpudelay
 cpudelay:	.long	1
 
 	.text
-	jmp	start			# Handle loaders that start at first byte of
-					# text rather than the entry point
+
 	.align 4
+ 
 mbootheader:  				# Beginning of multiboot header, embedded in ELF header
 	.long   MULTIBOOT_HEADER_MAGIC
 	.long   MULTIBOOT_HEADER_FLAGS
@@ -86,137 +79,97 @@ mbootheader:  				# Beginning of multiboot header, embedded in ELF header
 	.long   ebss			# bss end address
 	.long   start			# Entry address: end of multiboot header, end of a.out kludge
 
+    .align 2
+	.globl	_end
+	.globl	_edata
+	.globl	nulluser
+	.globl	_bootdev
+	.globl	_cyloffset
+	.globl	lidt
+	.globl  jumptocode
+	.globl  jumptobootcode
+
+	.globl	__zero			# artificial value for entry point
+	.set	__zero,0
+
+entry:	.globl	entry
 	.globl	start
+
+	movl	$BRELOC,%esi    # Move from BRELOC to 
+	movl	$0,%edi		# to relocated area
+	movl	$2000*1024,%ecx  # Size to Move (should be _edata)
+	cld
+	rep
+	movsb
+	# relocate program counter to relocation base
+	movl	$BRELOC+2000*1024, %esp	#Put Stack pointer somewhere safe.  
+	pushl	$start
+	ret
+
 start:
 
+	/* Save the stack pointer */
+
+	movl	%esp,%esi
+
 	/*
-	 * Store the boot arguments.
+	 * Clear Bss and up to 64K heap
 	 */
-	movl	%eax, bootsign
-	movl	%ebx, bootinfo
-	
+	movl	$64*1024,%ebx
+	movl	$_end,%eax	# should be movl $_end-_edata but ...
+	subl	$_edata,%eax
+	addl	%ebx,%eax
+	pushl	%eax
+	pushl	$_edata
+	call	bzero
+
 	/*
-	 * Test the multiboot signature and memory map flags
+	 * Clear 64K of stack
 	 */
-	cmpl	$MULTIBOOT_SIGNATURE, %eax
-	jne	halt
-	testb	$MULTIBOOT_BOOTINFO_MMAP, (%ebx)
-	je	halt
-	
-	/*
-	 * Iterate through the memory map segments to find the highest
-	 *   address that will fit the null stack
-	 */
-	movl	0x30(%ebx), %ecx	# Load mmap_addr
-	movl	0x2C(%ebx), %edx 	# Load mmap_length
-	andl	$0xfffffffc, %edx	# Load mmap_end
-	addl	%ecx, %edx
-	movl	$0x0, %esp		# Initialize stack pointer to some small value
+	movl	%esi,%eax
+	subl	%ebx,%eax
+	subl	$5*4,%ebx
+	pushl	%ebx
+	pushl	%eax
+	call	bzero
 
-mmap_search_start:
-	cmpl	%edx, %ecx		# If mmap_addr >= mmap_end then quit
-	jae	mmap_search_done
+	movl	%esi,%esp
 
-	# skip memory segment if it is not usable
-	movl	20(%ecx), %eax		# Test the address block type
-	cmpl	$0x01, %eax		# If type is not equal to 1
-	jne	mmap_search_next_sgmt	#   then this is not a usable block
-
-	# skip memory segment if it is within the memory for Xinu
-	movl	4(%ecx), %eax		# Load memory address of segment
-	movl	12(%ecx), %ebx		# Load segment size
-	add	%ebx, %eax		# Find end of memory segment
-	movl	$end, %ebx		# Load end of xinu
-	cmpl	%ebx, %eax		# Compare segment and xinu end
-	jle	mmap_search_next_sgmt	# Skip if segment is within xinu
-	
-	# Segment is usable and not within xinu memory region
-	#   Check if it is big enough to hold the null stack
-	#   Subtract off any memory location that overlaps the
-	#     the Xinu memory region
-	movl	4(%ecx), %eax		# Load memory address of segment
-	movl	$end, %ebx		# Load end of xinu
-	subl	%eax, %ebx		# Determine overlap
-	movl	12(%ecx), %eax		# Load segment size
-	cmpl	$0x0, %ebx		# Check if overlap is greater than zero
-	jl	mmap_search_no_overlap
-	subl	%ebx, %eax		# Subtract overlap size
-mmap_search_no_overlap:
-	cmpl	$NULLSTK, %eax		# Compare with nullstack size
-	jl	mmap_search_next_sgmt
-	
-	# Segment is big enough to hold the null stack
-	#   want to save the highest possible address
-	#   check if segment is larger than current stack pointer
-	movl	4(%ecx), %eax		# Load memory address of segment
-	movl	12(%ecx), %ebx		# Load segment size
-	addl	%ebx, %eax		# Retrieve segment end
-	cmpl	%esp, %eax		# Compare segment and stack pointer
-	jl	mmap_search_next_sgmt	# Skip segment if less than
-	
-	# Segment is big enough to hold the nullstack
-	#   and larger than the current stack pointer
-	#   Use the end of the new segment as the null stack
-	#     Round to the nearest block and subtract 4 (for STACKMAGIC)
-	movl	%eax, %esp
-	addl	$0x7, %esp
-	andl	$0xFFFFFFF8, %esp
-	subl	$0x4, %esp
-
-mmap_search_next_sgmt:
-	movl	(%ecx), %eax		# Load the entry_size
-	addl	%eax, %ecx		# mmap_addr += entry_size + 4
-	addl	$0x4, %ecx
-	jmp	mmap_search_start
-	
-mmap_search_done:
-
-	# Stack pointer set continue with boot
-	movl	%esp, %ebp
-	
-	/*
-	 * Clear flags.
-	 */
 	pushl	$0
 	popf
-	
-	/*
-	 * Zero the bss space
-	 */
-	movl	$ebss, %ebx
-	movl	$bss, %ecx		# start of bss in %ecx
-	subl	%ecx, %ebx		# bss size in %ebx
-	pushl	%ebx
-	pushl	%ecx
-	call	sbzero
-	popl	%ecx
-	popl	%ebx
-	
-	/*
-	 * Set up the global descriptor table.
-	 */
+
+	movl	%esp,%ebp
 	call	setsegs
 
 	lgdt	gdtr
 	/*
-	 * Reload segment registers; load code segment by a far
+	 * reload segment registers; we do code segment by a far
 	 * jump
 	 */
-	ljmp	$0x8, $gdt1	/* CS descriptor 1 */
+	ljmp	$0x8,$gdt1	/* CS descriptor 1 */
 gdt1:
-	movl	$0x10, %eax	/* DS descriptor 2 */
-	movw	%ax, %ds
-	movw	%ax, %es
-	movw	%ax, %fs
-	movw	%ax, %gs
-	movl	$0x18, %eax	/* SS descriptor 3 */
-	movw	%ax, %ss
-	
+	movl	$0x10,%eax	/* DS descriptor 2 */
+	movw	%ax,%ds
+	movw	%ax,%es
+	movl	$0x18,%eax	/* SS descriptor 3 */
+	movw	%ax,%ss
+	movl	initsp,%esp	/* set new stack pointer base */
+	movl	%esp,%ebp
+
 	/*
 	 * Call the nulluser to initialize the system
 	 */
+
 	call	nulluser
 	call	halt
+
+	.data
+_bootdev:	.long	0
+_cyloffset:	.long	0
+savearea:	.long	0,0	# sp & bp to return to
+
+	.text
+	.globl delay
 
 	.globl	inb
 inb:	movl	4(%esp), %edx
@@ -278,7 +231,10 @@ ___divsi3:
 	idivl 8(%esp)
 	ret
 
-	# sbzero (base, cnt)
+	#
+	# bzero (base,cnt)
+	#
+
 	.globl sbzero
 sbzero:
 	pushl	%edi
@@ -289,6 +245,25 @@ sbzero:
 	rep
 	stosb
 	popl	%edi
+	ret
+
+	#
+	# bcopy(src, dst, count)
+	#
+
+	.globl	bcopy
+bcopy:
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+L1:
+	movl	20(%esp),%ecx
+	cld
+	rep
+	movsb
+	popl	%edi
+	popl	%esi
 	ret
 
 	# insw(port, addr, cnt)
@@ -317,34 +292,16 @@ outsw:
 	popl	%esi
 	ret
 
-	# bcopy(src, dst, count)
-	.globl	bcopy
-bcopy:
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp), %esi
-	movl	16(%esp), %edi
-L1:
-	movl	20(%esp), %ecx
-	cld
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
+	#
 	# lidt() - load interrupt descriptor table from idtr
+	#
 	.globl	lidt
 lidt:
 	lidt	idtr
 	ret
 
-	# cpuid() - report basic CPU type information
-	.globl	cpuid
-cpuid:
-	pushl	%ebx
-	movl	$1, %eax	# request basic CPU type
-	xorl	%ecx, %ecx
-	cpuid
-	popl	%ebx
-	ret			# return value in %eax
+jumptocode:
+	ljmp	$0x20,$0x100000	/* CS descriptor 1 */
+
+jumptobootcode:
+        ljmp    $0x20,$BOOTPLOC /* CS descriptor 1 */

@@ -26,6 +26,10 @@ struct	memblk	memlist;	/* List of free memory blocks		*/
 int	prcount;		/* Total number of live processes	*/
 pid32	currpid;		/* ID of currently executing process	*/
 
+/* Control sequence to reset the console colors and cusor positiion	*/
+
+#define CONSOLE_RESET " \033[0m\033[2J\033[;H"
+
 /*------------------------------------------------------------------------
  * nulluser - initialize the system and become the null process
  *
@@ -46,7 +50,7 @@ void	nulluser()
 	uint32	free_mem;		/* Total amount of free memory	*/
 	
 	/* Initialize the system */
-		
+
 	sysinit();
 	
 	/* Output Xinu memory layout */
@@ -73,6 +77,12 @@ void	nulluser()
 	/* Enable interrupts */
 
 	enable();
+
+
+	/* Initialize the network stack and processes */
+
+	net_init();
+
 
 	/* Create a process to execute function main() */
 
@@ -101,12 +111,10 @@ static	void	sysinit()
 	struct	procent	*prptr;		/* Ptr to process table entry	*/
 	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
-	/* Platform Specific Initialization */
+	/* Reset the console */
 
-	platinit();
-	
-	
-	kprintf("\033[39;49m\n\r%s\n\n\r", VERSION);
+	kprintf(CONSOLE_RESET);	
+	kprintf("\n\r%s\n\n\r", VERSION);
 
 	/* Initialize the interrupt vectors */
 
@@ -163,6 +171,11 @@ static	void	sysinit()
 	/* Create a ready list for processes */
 
 	readylist = newqueue();
+
+
+	/* initialize the PCI bus */
+
+	pci_init();
 
 	/* Initialize the real time clock */
 

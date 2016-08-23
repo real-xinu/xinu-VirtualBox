@@ -39,7 +39,7 @@ status	tftp_send1 (
 	/*   ---------------------   */
 	/*  | Opcode |   Block #  |  */
 	/*   ---------------------   */
-	
+
 	/* Send the outgoing message */
 	
 	ret = udp_sendto(sock, remip, *remport, (char *) msg, mlen);
@@ -109,7 +109,7 @@ status  tftpget(
 								 verbose);
 }
 
- /*------------------------------------------------------------------------
+/*------------------------------------------------------------------------
  *
  * tftpget_mb  -  multibuffer version of TFPT
  *
@@ -137,8 +137,6 @@ status  tftpget_mb(
 	int32	mlen;			/* Length of outgoing mesage	*/
 	struct	tftp_msg inmsg;		/* Buffer for response message	*/
 	int32	dlen;			/* Size of data in a response	*/
-	uint32	now;			/* Current time (used to gener.	*/
-					/*   a "random" port number	*/
 	char*   curr_buf;		/* Current buffer being used	*/
 	uint32  curr_buf_ind;		/* Index of current buffer	*/
 	uint32  curr_used;		/* Amount used in buffer	*/
@@ -169,10 +167,7 @@ status  tftpget_mb(
 
 	/* Generate a local port */
 
-	if (getutime(&now) == SYSERR) {
-		return SYSERR;
-	}
-	localport = (uint16) ( 50000 + (now & 0xfff) );
+	localport = getport();
 
 	if (verbose & TFTP_VERBOSE) {
 		kprintf("[TFTP Get] Using local port %u\n",

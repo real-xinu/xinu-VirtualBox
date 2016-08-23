@@ -13,7 +13,7 @@ void	ttykickout(
 {
 	/* Force the UART hardware generate an output interrupt */
 
-	csrptr->ier = UART_IER_ERBFI | UART_IER_ETBEI;
+	io_outb(csrptr->ier, UART_IER_ERBFI | UART_IER_ETBEI);
 
 	return;
 }

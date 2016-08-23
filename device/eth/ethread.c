@@ -3,105 +3,72 @@
 #include <xinu.h>
 
 /*------------------------------------------------------------------------
- * ethread  -  Read an incoming packet on Intel Quark Ethernet
+ * ethread - read a packet from an E1000E device
  *------------------------------------------------------------------------
  */
-devcall	ethread	(
-	  struct dentry	*devptr,	/* Entry in device switch table	*/
-	  char	*buf,			/* Buffer for the packet	*/
-	  int32	len 			/* Size of the buffer		*/
+devcall	ethread(
+	struct	dentry	*devptr,	/* entry in device switch table	*/
+	void	*buf,			/* buffer to hold packet	*/
+	uint32	len			/* length of buffer		*/
 	)
 {
-	struct	ethcblk *ethptr;	/* Ethertab entry pointer	*/
-	struct	eth_q_rx_desc *rdescptr;/* Pointer to the descriptor	*/
-	struct	netpacket *pktptr;	/* Pointer to packet		*/
-	uint32	framelen = 0;		/* Length of the incoming frame	*/
-	bool8	valid_addr;
-	int32	i;
+	struct 	ethcblk	*ethptr; 	/* ptr to entry in ethertab	*/
+	struct	eth_rx_desc *descptr;	/* ptr to ring descriptor	*/
+	char	*pktptr;		/* ptr used during packet copy	*/
+	uint32	head;			/* head of ring buffer 		*/
+	uint32	status;			/* status of entry		*/
+	uint32	length;			/* packet length		*/
+	int32 	retval;
+	uint32 	rdt;
 
 	ethptr = &ethertab[devptr->dvminor];
 
-	while(1) {
-
-		/* Wait until there is a packet in the receive queue */
-
-		wait(ethptr->isem);
-
-		/* Point to the head of the descriptor list */
-
-		rdescptr = (struct eth_q_rx_desc *)ethptr->rxRing +
-							ethptr->rxHead;
-		pktptr = (struct netpacket*)rdescptr->buffer1;
-
-		/* See if destination address is our unicast address */
-
-		if(!memcmp(pktptr->net_ethdst, ethptr->devAddress, 6)) {
-			valid_addr = TRUE;
-
-		/* See if destination address is the broadcast address */
-
-		} else if(!memcmp(pktptr->net_ethdst,
-                                    NetData.ethbcast,6)) {
-            		valid_addr = TRUE;
-
-		/* For multicast addresses, see if we should accept */
-
-    		} else {
-			valid_addr = FALSE;
-			for(i = 0; i < (ethptr->ed_mcc); i++) {
-				if(memcmp(pktptr->net_ethdst,
-					ethptr->ed_mca[i], 6) == 0){
-					valid_addr = TRUE;
-					break;
-				}
-		        }
-		}
-
-		if(valid_addr == TRUE){ /* Accept this packet */
-
-			/* Get the length of the frame */
-
-			framelen = (rdescptr->status >> 16) & 0x00003FFF;
-
-			/* Only return len characters to caller */
-
-			if(framelen > len) {
-				framelen = len;
-			}
-
-			/* Copy the packet into the caller's buffer */
-
-			memcpy(buf, (void*)rdescptr->buffer1, framelen);
-		}
-
-        	/* Increment the head of the descriptor list */
-
-		ethptr->rxHead += 1;
-		if(ethptr->rxHead >= ETH_QUARK_RX_RING_SIZE) {
-			ethptr->rxHead = 0;
-		}
-
-		/* Reset the descriptor to max possible frame len */
-
-		rdescptr->buf1size = sizeof(struct netpacket);
-
-		/* If we reach the end of the ring, mark the descriptor	*/
-
-		if(ethptr->rxHead == 0) {
-			rdescptr->rdctl1 |= (ETH_QUARK_RDCTL1_RER);
-		}
-
-		/* Indicate that the descriptor is ready for DMA input */
-
-		rdescptr->status = ETH_QUARK_RDST_OWN;
-
-		if(valid_addr == TRUE) {
-			break;
-		}
+	if ((ETH_STATE_UP != ethptr->state)
+			|| (len < ETH_HDR_LEN)) {
+		return SYSERR;
 	}
 
-	/* Return the number of bytes returned from the packet */
+	/* Wait for a packet to arrive */
 
-	return framelen;
+	wait(ethptr->isem);
 
+	/* Find out where to pick up the packet */
+
+	head = ethptr->rxHead;
+	descptr = (struct eth_rx_desc *)ethptr->rxRing + head;
+	status = descptr->status;
+
+	if (!(status & E1000_RXD_STAT_DD)) { 	/* check for error */
+		kprintf("ethread: packet error!\n");
+		retval = SYSERR;
+	} else { 	/* pick up the packet */			
+		pktptr = (char *)((uint32)(descptr->buffer_addr &
+					   ADDR_BIT_MASK));
+		length = descptr->length;
+		memcpy(buf, pktptr, length);
+		retval = length;
+	}
+	/* Clear up the descriptor and the buffer */
+
+	descptr->length = 0;
+	descptr->csum = 0;
+	descptr->status = 0;
+	descptr->errors = 0;
+	descptr->special = 0;
+	memset((char *)((uint32)(descptr->buffer_addr & ADDR_BIT_MASK)), 
+			'\0', ETH_BUF_SIZE); 
+
+	/* Add newly reclaimed descriptor to the ring */
+
+	if (ethptr->rxHead % E1000_RING_BOUNDARY == 0) {
+		rdt = eth_io_readl(ethptr->iobase, E1000_RDT(0));
+		rdt = (rdt + E1000_RING_BOUNDARY) % ethptr->rxRingSize;
+		eth_io_writel(ethptr->iobase, E1000_RDT(0), rdt);
+	}
+
+	/* Advance the head pointing to the next ring descriptor which 	*/
+	/*  	will be ready to be picked up 				*/
+	ethptr->rxHead = (ethptr->rxHead + 1) % ethptr->rxRingSize;
+
+	return retval;
 }

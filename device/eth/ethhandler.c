@@ -3,125 +3,132 @@
 #include <xinu.h>
 
 /*------------------------------------------------------------------------
- * ethhandler  -  Interrupt handler for Intel Quark Ethernet
+ * eth_rxPackets - handler for receiver interrupts
  *------------------------------------------------------------------------
  */
-interrupt	ethhandler(void)
+local 	void 	eth_rxPackets(
+	struct 	ethcblk	*ethptr 	/* ptr to control block		*/
+	)
 {
-	struct	ethcblk	*ethptr;	/* Ethertab entry pointer	*/
-	struct	eth_q_csreg *csrptr;	/* Pointer to Ethernet CRSs	*/
-	struct	eth_q_tx_desc *tdescptr;/* Pointer to tx descriptor	*/
-	struct	eth_q_rx_desc *rdescptr;/* Pointer to rx descriptor	*/
-	volatile uint32	sr;		/* Copy of status register	*/
-	uint32	count;			/* Variable used to count pkts	*/
+	struct	eth_rx_desc *descptr;/* ptr to ring descriptor 	*/
+	uint32	tail;			/* pos to insert next packet	*/
+	uint32	status;			/* status of ring descriptor 	*/
+	int numdesc; 			/* num. of descriptor reclaimed	*/
 
-	ethptr = &ethertab[devtab[ETHER0].dvminor];
+	for (numdesc = 0; numdesc < ethptr->rxRingSize; numdesc++) {
 
-	csrptr = (struct eth_q_csreg *)ethptr->csr;
+		/* Insert new arrived packet to the tail */
 
-	/* Copy the status register into a local variable */
+		tail = ethptr->rxTail;
+		descptr = (struct eth_rx_desc *)ethptr->rxRing + tail;
+		status = descptr->status;
 
-	sr = csrptr->sr;
+		if (status == 0) {
+			break;
+		}
 
-	/* If there is no interrupt pending, return */
+		ethptr->rxTail 
+			= (ethptr->rxTail + 1) % ethptr->rxRingSize;
+	}
 
-	if((csrptr->sr & ETH_QUARK_SR_NIS) == 0) {
+	signaln(ethptr->isem, numdesc);
+
+	return;
+}
+
+/*------------------------------------------------------------------------
+ * eth_txPackets - handler for transmitter interrupts
+ *------------------------------------------------------------------------
+ */
+local 	void 	eth_txPackets(
+	struct	ethcblk	*ethptr		/* ptr to control block		*/
+	)
+{
+	struct	eth_tx_desc *descptr;/* ptr to ring descriptor 	*/
+	uint32 	head; 			/* pos to reclaim descriptor	*/
+	char 	*pktptr; 		/* ptr used during packet copy  */
+	int 	numdesc; 		/* num. of descriptor reclaimed	*/
+
+	for (numdesc = 0; numdesc < ethptr->txRingSize; numdesc++) {
+		head = ethptr->txHead;
+		descptr = (struct eth_tx_desc *)ethptr->txRing + head;
+
+		if (!(descptr->upper.data & E1000_TXD_STAT_DD))
+			break;
+
+		/* Clear the write-back descriptor and buffer */
+
+		descptr->lower.data = 0;
+		descptr->upper.data = 0;
+		pktptr = (char *)((uint32)(descptr->buffer_addr &
+					   ADDR_BIT_MASK));
+		memset(pktptr, '\0', ETH_BUF_SIZE);
+
+		ethptr->txHead 
+			= (ethptr->txHead + 1) % ethptr->txRingSize;
+	}
+
+	signaln(ethptr->osem, numdesc);
+
+	return;
+}
+
+
+/*------------------------------------------------------------------------
+ * ethhandler - decode and handle interrupt from an E1000 device
+ *------------------------------------------------------------------------
+ */
+interrupt ethhandler(void)
+{
+	uint32	status;
+	struct  dentry  *devptr;        /* address of device control blk*/
+	struct 	ethcblk	*ethptr;	/* ptr to control block		*/
+
+	/* Initialize structure pointers */
+
+	devptr = (struct dentry *) &devtab[ETHER0];
+	
+	/* Obtain a pointer to the tty control block */
+
+	ethptr = &ethertab[devptr->dvminor];
+
+	/* Invoke the device-specific interrupt handler */
+
+	/* Disable device interrupt */
+
+	ethIrqDisable(ethptr);
+
+	/* Obtain status bits from device */
+
+	status = eth_io_readl(ethptr->iobase, E1000_ICR);
+
+	/* Not our interrupt */
+
+	if (status == 0) {
+		ethIrqEnable(ethptr);
 		return;
 	}
 
-	/* Acknowledge the interrupt */
+	resched_cntl(DEFER_START);
 
-	csrptr->sr = sr;
-
-	/* Check status register to figure out the source of interrupt */
-
-	if (sr & ETH_QUARK_SR_TI) { /* Transmit interrupt */
-
-		/* Pointer to the head of transmit desc ring */
-
-		tdescptr = (struct eth_q_tx_desc *)ethptr->txRing +
-							ethptr->txHead;
-
-		/* Start packet count at zero */
-
-		count = 0;
-
-		/* Repeat until we process all the descriptor slots */
-
-		while(ethptr->txHead != ethptr->txTail) {
-
-			/* If the descriptor is owned by DMA, stop here */
-
-			if(tdescptr->ctrlstat & ETH_QUARK_TDCS_OWN) {
-				break;
-			}
-
-			/* Descriptor was processed; increment count	*/
-
-			count++;
-
-			/* Go to the next descriptor */
-
-			tdescptr += 1;
-
-			/* Increment the head of the transmit desc ring */
-
-			ethptr->txHead += 1;
-			if(ethptr->txHead >= ethptr->txRingSize) {
-				ethptr->txHead = 0;
-				tdescptr = (struct eth_q_tx_desc *)
-							ethptr->txRing;
-			}
-		}
-
-		/* 'count' packets were processed by DMA, and slots are	*/
-		/* now free; signal the semaphore accordingly		*/
-
-		signaln(ethptr->osem, count);
-
+	if (status & E1000_ICR_LSC) {
 	}
-	if(sr & ETH_QUARK_SR_RI) { /* Receive interrupt	*/
 
-		/* Get the pointer to the tail of the receive desc list */
-
-		rdescptr = (struct eth_q_rx_desc *)ethptr->rxRing +
-							ethptr->rxTail;
-
-		count = 0;	/* Start packet count at zero */
-
-		/* Repeat until we have received		*/
-		/* maximum no. packets that can fit in queue 	*/
-
-		while(count <= ethptr->rxRingSize) {
-
-			/* If the descriptor is owned by the DMA, stop */
-
-			if(rdescptr->status & ETH_QUARK_RDST_OWN) {
-				break;
-			}
-
-			/* Descriptor was processed; increment count	*/
-			count++;
-
-			/* Go to the next descriptor */
-
-			rdescptr += 1;
-
-			/* Increment the tail index of the rx desc ring */
-
-			ethptr->rxTail += 1;
-			if(ethptr->rxTail >= ethptr->rxRingSize) {
-				ethptr->rxTail = 0;
-				rdescptr = (struct eth_q_rx_desc *)
-							ethptr->rxRing;
-			}
-		}
-
-		/* 'count' packets were received and are available,	*/
-		/*   so signal the semaphore accordingly		*/
-
-		signaln(ethptr->isem, count);
+	if (status & E1000_ICR_RXT0) {
+		ethptr->rxIrq++;
+		eth_rxPackets(ethptr);
 	}
+
+	if (status & E1000_ICR_TXDW) {
+		ethptr->txIrq++;
+		eth_txPackets(ethptr);
+	}
+
+	/* Enable device interrupt */
+
+	ethIrqEnable(ethptr);
+	
+	resched_cntl(DEFER_STOP);
 
 	return;
 }

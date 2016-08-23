@@ -1,6 +1,8 @@
 /* memory.h - roundmb, truncmb, freestk */
 
 #define	PAGE_SIZE	4096
+#define	HOLESTART	((char *)(640 * 1024))
+#define	HOLEEND		((char *)(1024 * 1024))
 
 /*----------------------------------------------------------------------
  * roundmb, truncmb - Round or truncate address to memory block size

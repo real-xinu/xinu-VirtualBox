@@ -30,8 +30,8 @@ void	ttyhandle_out(
 
 	if ( (typtr->tyehead == typtr->tyetail) &&
 	     (semcount(typtr->tyosem) >= TY_OBUFLEN) ) {
-		ier = csrptr->ier;
-		csrptr->ier = ier & ~UART_IER_ETBEI;
+		ier = io_inb(csrptr->ier);
+		io_outb(csrptr->ier,ier & ~UART_IER_ETBEI);
 		return;
 	}
 	
@@ -43,7 +43,7 @@ void	ttyhandle_out(
 	/*   nonempty, xmit chars from the echo queue		*/
 
 	while ( (uspace>0) &&  typtr->tyehead != typtr->tyetail) {
-		csrptr->buffer = *typtr->tyehead++;
+		io_outb(csrptr->buffer, *typtr->tyehead++);
 		if (typtr->tyehead >= &typtr->tyebuff[TY_EBUFLEN]) {
 			typtr->tyehead = typtr->tyebuff;
 		}
@@ -56,7 +56,7 @@ void	ttyhandle_out(
 	ochars = 0;
 	avail = TY_OBUFLEN - semcount(typtr->tyosem);
 	while ( (uspace>0) &&  (avail > 0) ) {
-		csrptr->buffer = *typtr->tyohead++;
+		io_outb(csrptr->buffer, *typtr->tyohead++);
 		if (typtr->tyohead >= &typtr->tyobuff[TY_OBUFLEN]) {
 			typtr->tyohead = typtr->tyobuff;
 		}

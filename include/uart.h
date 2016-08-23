@@ -4,8 +4,8 @@
 #define	UART_OUT_IDLE	0x0016	/* determine if transmit idle		*/
 #define	UART_FIFO_SIZE	16	/* chars in UART onboard output FIFO	*/
 				/* (16 for later UART chips)		*/
-#define INTEL_QUARK_UART_PCI_DID	0x0936	/* UART PCI Device ID	*/
-#define INTEL_QUARK_UART_PCI_VID	0x8086	/* UART PCI Vendor ID	*/
+#define INTEL_UART_PCI_DID	0x0936	/* UART PCI Device ID		*/
+#define INTEL_UART_PCI_VID	0x8086	/* UART PCI Vendor ID		*/
 /*
  * Control and Status Register (CSR) definintions for the 16550 UART.
  * The code maps the structure structure directly onto the base address
@@ -13,16 +13,16 @@
  */
 struct	uart_csreg
 {
-	volatile uint32	buffer;	/* receive buffer (when read)		*/
+	volatile byte	buffer;	/* receive buffer (when read)		*/
 				/*   OR transmit hold (when written)	*/
-	volatile uint32	ier;	/* interrupt enable			*/
-	volatile uint32	iir;	/* interrupt identification (when read)	*/
+	volatile byte	ier;	/* interrupt enable			*/
+	volatile byte	iir;	/* interrupt identification (when read)	*/
 				/*   OR FIFO control (when written)	*/
-	volatile uint32	lcr;	/* line control register		*/
-	volatile uint32	mcr;	/* modem control register		*/
-	volatile uint32	lsr;	/* line status register			*/
-	volatile uint32	msr;	/* modem status register		*/
-	volatile uint32	scr;	/* scratch register			*/
+	volatile byte	lcr;	/* line control register		*/
+	volatile byte	mcr;	/* modem control register		*/
+	volatile byte	lsr;	/* line status register			*/
+	volatile byte	msr;	/* modem status register		*/
+	volatile byte	scr;	/* scratch register			*/
 };
 
 /* Alternative names for control and status registers */

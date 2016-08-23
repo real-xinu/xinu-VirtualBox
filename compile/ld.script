@@ -17,6 +17,7 @@ SECTIONS
     data = ABSOLUTE(.);         /* data: beginning of data segment      */
     *(.data .data.*)                                                    
     edata = ABSOLUTE(.) ;       /* edata: end of data                   */
+    _edata = ABSOLUTE(.) ;	/* _edata: end of data section		*/
     . = ALIGN(4096);                                                    
   }                                                                     
   .bss :                                                                
