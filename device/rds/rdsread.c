@@ -28,6 +28,13 @@ devcall	rdsread (
 		return SYSERR;
 	}
 
+	/* Ensure rdsprocess is runnning */
+
+	if ( ! rdptr->rd_comruns ) {
+		rdptr->rd_comruns = TRUE;
+		resume(rdptr->rd_comproc);
+	}
+
 	/* Search the cache for specified block */
 
 	bptr = rdptr->rd_chnext;
@@ -81,11 +88,11 @@ devcall	rdsread (
 
 	recvclr();
 
-	/* Signal semaphore to start communication process */
+	/* Signal the semaphore to start communication */
 
 	signal(rdptr->rd_reqsem);
 
-	/* Block to wait for message */
+	/* Block to wait for a message */
 
 	bptr = (struct rdbuff *)receive();
 	if (bptr == (struct rdbuff *)SYSERR) {	
