@@ -3,7 +3,7 @@
 #include <xinu.h>
 
 /*------------------------------------------------------------------------
- * ethwrite - write a packet to an E1000E device
+ * ethwrite - write a packet to a VirtIO Network device
  *------------------------------------------------------------------------
  */
 devcall	ethwrite(
@@ -13,12 +13,13 @@ devcall	ethwrite(
 	)
 {
 	struct	ethcblk	*ethptr; 	/* ptr to entry in ethertab 	*/
-	struct 	eth_tx_desc *descptr;/* ptr to ring descriptor 	*/
-	char 	*pktptr; 		/* ptr used during packet copy  */
-	uint32	tail;			/* index of ring buffer for pkt	*/
-	uint32 	tdt;
+	struct	virtio_cblk *csrptr;	/* VirtIO control block		*/
+	uint16	next_idx;		/* Next index in avail. ring	*/
+	int32	i;			/* Descriptor index		*/
 
 	ethptr = &ethertab[devptr->dvminor];
+
+	csrptr = (struct virtio_cblk *)ethptr->csr;
 
 	/* Verify Ethernet interface is up and arguments are valid */
 
@@ -28,47 +29,43 @@ devcall	ethwrite(
 		return SYSERR;
 	}
 
-	/* If padding of short packet is enabled, the value in TX 	*/
-	/* 	descriptor length feild should be not less than 17 	*/
-	/* 	bytes */
-
-	if (len < 17)
-		return SYSERR;
-
-	/* Wait for a free ring slot */
+	/* Wait until there is an available descriptor */
 
 	wait(ethptr->osem);
 
-	/* Find the tail of the ring to insert packet */
-	
-	tail = ethptr->txTail;
-	descptr = (struct eth_tx_desc *)ethptr->txRing + tail;
+	/* Get the index of next descriptor */
 
-	/* Copy packet to transmit ring buffer */
-	
-	pktptr = (char *)((uint32)descptr->buffer_addr & ADDR_BIT_MASK);
-	memcpy(pktptr, buf, len);
+	i = ((uint16 *)ethptr->txRing)[ethptr->txHead++];
+	if(ethptr->txHead >= ethptr->txRingSize) {
+		ethptr->txHead = 0;
+	}
 
-	/* Insert transmitting command and length */
-	
-	descptr->lower.data &= E1000_TXD_CMD_DEXT; 
-	descptr->lower.data = E1000_TXD_CMD_IDE |
-			      E1000_TXD_CMD_RS | 
-			      E1000_TXD_CMD_IFCS |
-			      E1000_TXD_CMD_EOP |
-			      len;
-	descptr->upper.data = 0;
+	/* Copy the packet into the descriptor buffer */
 
-	/* Add descriptor by advancing the tail pointer */
-	
-	tdt = eth_io_readl(ethptr->iobase, E1000_TDT(0));
-	tdt = (tdt + 1) % ethptr->txRingSize;
-	eth_io_writel(ethptr->iobase, E1000_TDT(0), tdt);
+	memcpy((byte *)csrptr->queue[1].desc[i].addr +
+				sizeof(struct virtio_net_hdr), buf, len);
+	csrptr->queue[1].desc[i].len = sizeof(struct virtio_net_hdr) + len;
+	memset(csrptr->queue[1].desc[i].addr, 0,
+			sizeof(struct virtio_net_hdr));
+	csrptr->queue[1].desc[i].flags = 0;
 
-	/* Advance the ring tail pointing to the next available ring 	*/
-	/* 	descriptor 						*/
-	
-	ethptr->txTail = (ethptr->txTail + 1) % ethptr->txRingSize;
+	/* Insert the descriptor in the available ring */
+
+	next_idx = csrptr->queue[1].avail->idx % csrptr->queue[1].queue_size;
+	csrptr->queue[1].avail->ring[next_idx] = i;
+
+	/* Make sure all memory operations are completed at this point */
+
+	__sync_synchronize();
+
+	/* Make the descriptor available to the device */
+
+	csrptr->queue[1].avail_idx = csrptr->queue[1].avail->idx;
+	csrptr->queue[1].avail->idx += 1;
+
+	/* Notify the device about change in the queue */
+
+	outw((int32)&(csrptr->csr->qnotify), 1);
 
 	return len;
 }

@@ -2,80 +2,9 @@
 
 #include <xinu.h>
 
-/*------------------------------------------------------------------------
- * eth_rxPackets - handler for receiver interrupts
- *------------------------------------------------------------------------
- */
-local 	void 	eth_rxPackets(
-	struct 	ethcblk	*ethptr 	/* ptr to control block		*/
-	)
-{
-	struct	eth_rx_desc *descptr;/* ptr to ring descriptor 	*/
-	uint32	tail;			/* pos to insert next packet	*/
-	uint32	status;			/* status of ring descriptor 	*/
-	int numdesc; 			/* num. of descriptor reclaimed	*/
-
-	for (numdesc = 0; numdesc < ethptr->rxRingSize; numdesc++) {
-
-		/* Insert new arrived packet to the tail */
-
-		tail = ethptr->rxTail;
-		descptr = (struct eth_rx_desc *)ethptr->rxRing + tail;
-		status = descptr->status;
-
-		if (status == 0) {
-			break;
-		}
-
-		ethptr->rxTail 
-			= (ethptr->rxTail + 1) % ethptr->rxRingSize;
-	}
-
-	signaln(ethptr->isem, numdesc);
-
-	return;
-}
 
 /*------------------------------------------------------------------------
- * eth_txPackets - handler for transmitter interrupts
- *------------------------------------------------------------------------
- */
-local 	void 	eth_txPackets(
-	struct	ethcblk	*ethptr		/* ptr to control block		*/
-	)
-{
-	struct	eth_tx_desc *descptr;/* ptr to ring descriptor 	*/
-	uint32 	head; 			/* pos to reclaim descriptor	*/
-	char 	*pktptr; 		/* ptr used during packet copy  */
-	int 	numdesc; 		/* num. of descriptor reclaimed	*/
-
-	for (numdesc = 0; numdesc < ethptr->txRingSize; numdesc++) {
-		head = ethptr->txHead;
-		descptr = (struct eth_tx_desc *)ethptr->txRing + head;
-
-		if (!(descptr->upper.data & E1000_TXD_STAT_DD))
-			break;
-
-		/* Clear the write-back descriptor and buffer */
-
-		descptr->lower.data = 0;
-		descptr->upper.data = 0;
-		pktptr = (char *)((uint32)(descptr->buffer_addr &
-					   ADDR_BIT_MASK));
-		memset(pktptr, '\0', ETH_BUF_SIZE);
-
-		ethptr->txHead 
-			= (ethptr->txHead + 1) % ethptr->txRingSize;
-	}
-
-	signaln(ethptr->osem, numdesc);
-
-	return;
-}
-
-
-/*------------------------------------------------------------------------
- * ethhandler - decode and handle interrupt from an E1000 device
+ * ethhandler - interrupt handler for VirtIO Network device
  *------------------------------------------------------------------------
  */
 interrupt ethhandler(void)
@@ -83,52 +12,106 @@ interrupt ethhandler(void)
 	uint32	status;
 	struct  dentry  *devptr;        /* address of device control blk*/
 	struct 	ethcblk	*ethptr;	/* ptr to control block		*/
+	struct	virtio_cblk *csrptr;	/* ptr to virtio control block	*/
+	int32	next_idx;		/* Next index in avail. ring	*/
+	int32	count;			/* Descriptor count		*/
+	int32	scount;			/* Signal count for RX interrupt*/
+	int32	d;			/* Descriptor index		*/
+	byte	isr;			/* Interrupt status		*/
+	int32	i, j;			/* Index variables		*/
 
 	/* Initialize structure pointers */
 
 	devptr = (struct dentry *) &devtab[ETHER0];
-	
-	/* Obtain a pointer to the tty control block */
+
+	/* Obtain a pointer to the Ethernet control block */
 
 	ethptr = &ethertab[devptr->dvminor];
 
-	/* Invoke the device-specific interrupt handler */
+	/* Obtain a pointer to the VirtIO control block */
 
-	/* Disable device interrupt */
+	csrptr = (struct virtio_cblk *)ethptr->csr;
 
-	ethIrqDisable(ethptr);
+	/* Read the interrupt status register */
 
-	/* Obtain status bits from device */
+	isr = inb((int32)&(csrptr->csr->isr));
 
-	status = eth_io_readl(ethptr->iobase, E1000_ICR);
+	//kprintf("ethhandler: isr %02x\n", isr);
 
-	/* Not our interrupt */
-
-	if (status == 0) {
-		ethIrqEnable(ethptr);
+	if(!(isr & 0x01)) { /* There is no queue interrupt, ignore */
 		return;
 	}
 
-	resched_cntl(DEFER_START);
+	if(csrptr->queue[0].used->idx != csrptr->queue[0].used_idx) {
+						/* RX Queue interrupt 	*/
+		//kprintf("ethhandler: RX Q interrupt\n");
 
-	if (status & E1000_ICR_LSC) {
+		count = csrptr->queue[0].used->idx -
+				csrptr->queue[0].used_idx;
+
+		j = csrptr->queue[0].used_idx % csrptr->queue[0].queue_size;
+
+		scount = 0;
+		for(i = 0; i < count; i++) {
+
+			d = csrptr->queue[0].used->ring[j++].id;
+			if(j >= csrptr->queue[0].queue_size) {
+				j = 0;
+			}
+
+			//kprintf("ethhandler: RX desc %d\n", d);
+
+			//kprintf("ethhandler RX semcount %d ring size %d\n", semcount(ethptr->isem), ethptr->rxRingSize);
+			if(semcount(ethptr->isem) >= (int32)ethptr->rxRingSize) {
+				csrptr->queue[0].desc[d].len = sizeof(struct virtio_net_hdr) +
+							       sizeof(struct netpacket);
+
+				next_idx = csrptr->queue[0].avail->idx %
+							csrptr->queue[0].queue_size;
+				csrptr->queue[0].avail->ring[next_idx] = d;
+				csrptr->queue[0].avail->idx += 1;
+				continue;
+			}
+
+			((uint16 *)ethptr->rxRing)[ethptr->rxTail++] = d;
+			if(ethptr->rxTail >= ethptr->rxRingSize) {
+				ethptr->rxTail = 0;
+			}
+			scount++;
+		}
+
+		csrptr->queue[0].used_idx = csrptr->queue[0].used->idx;
+
+		//kprintf("ethhandler: rx signal %d\n", scount);
+		signaln(ethptr->isem, scount);
 	}
 
-	if (status & E1000_ICR_RXT0) {
-		ethptr->rxIrq++;
-		eth_rxPackets(ethptr);
+	if(csrptr->queue[1].used->idx != csrptr->queue[1].used_idx) {
+						/* TX Queue interrupt	*/
+		//kprintf("ethhandler: TX Q interrupt\n");
+
+		count = csrptr->queue[1].used->idx -
+				csrptr->queue[1].used_idx;
+
+		j = csrptr->queue[1].used_idx % csrptr->queue[1].queue_size;
+
+		for(i = 0; i < count; i++) {
+
+			d = csrptr->queue[1].used->ring[j++].id;
+			if(j >= csrptr->queue[1].queue_size) {
+				j = 0;
+			}
+
+			//kprintf("ethhandler: used descriptor %d\n", d);
+
+			((uint16 *)ethptr->txRing)[ethptr->txTail++] = d;
+			if(ethptr->txTail >= ethptr->txRingSize) {
+				ethptr->txTail = 0;
+			}
+		}
+
+		csrptr->queue[1].used_idx = csrptr->queue[1].used->idx;
+
+		signaln(ethptr->osem, count);
 	}
-
-	if (status & E1000_ICR_TXDW) {
-		ethptr->txIrq++;
-		eth_txPackets(ethptr);
-	}
-
-	/* Enable device interrupt */
-
-	ethIrqEnable(ethptr);
-	
-	resched_cntl(DEFER_STOP);
-
-	return;
 }

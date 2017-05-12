@@ -20,6 +20,8 @@
 #include <rfilesys.h>
 #include <rdisksys.h>
 #include <lfilesys.h>
+#include <virtio.h>
+#include <virtio_net.h>
 #include <ether.h>
 #include <net.h>
 #include <ip.h>

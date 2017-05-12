@@ -4,7 +4,6 @@
 
 process	main(void)
 {
-
 	/* Run the Xinu shell */
 
 	recvclr();

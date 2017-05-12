@@ -3,7 +3,7 @@
 #include <xinu.h>
 
 /*------------------------------------------------------------------------
- * ethread - read a packet from an E1000E device
+ * ethread - read a packet from a VirtIO Network device
  *------------------------------------------------------------------------
  */
 devcall	ethread(
@@ -13,15 +13,13 @@ devcall	ethread(
 	)
 {
 	struct 	ethcblk	*ethptr; 	/* ptr to entry in ethertab	*/
-	struct	eth_rx_desc *descptr;	/* ptr to ring descriptor	*/
-	char	*pktptr;		/* ptr used during packet copy	*/
-	uint32	head;			/* head of ring buffer 		*/
-	uint32	status;			/* status of entry		*/
-	uint32	length;			/* packet length		*/
-	int32 	retval;
-	uint32 	rdt;
+	struct	virtio_cblk *csrptr;	/* ptr to Virtio control block	*/
+	int32	next_id;		/* next index in avail. ring	*/
+	int32	d;			/* descriptor index		*/
 
 	ethptr = &ethertab[devptr->dvminor];
+
+	csrptr = (struct virtio_cblk *)ethptr->csr;
 
 	if ((ETH_STATE_UP != ethptr->state)
 			|| (len < ETH_HDR_LEN)) {
@@ -32,43 +30,36 @@ devcall	ethread(
 
 	wait(ethptr->isem);
 
-	/* Find out where to pick up the packet */
+	/* Get the next descriptor index from RX ring */
 
-	head = ethptr->rxHead;
-	descptr = (struct eth_rx_desc *)ethptr->rxRing + head;
-	status = descptr->status;
-
-	if (!(status & E1000_RXD_STAT_DD)) { 	/* check for error */
-		kprintf("ethread: packet error!\n");
-		retval = SYSERR;
-	} else { 	/* pick up the packet */			
-		pktptr = (char *)((uint32)(descptr->buffer_addr &
-					   ADDR_BIT_MASK));
-		length = descptr->length;
-		memcpy(buf, pktptr, length);
-		retval = length;
-	}
-	/* Clear up the descriptor and the buffer */
-
-	descptr->length = 0;
-	descptr->csum = 0;
-	descptr->status = 0;
-	descptr->errors = 0;
-	descptr->special = 0;
-	memset((char *)((uint32)(descptr->buffer_addr & ADDR_BIT_MASK)), 
-			'\0', ETH_BUF_SIZE); 
-
-	/* Add newly reclaimed descriptor to the ring */
-
-	if (ethptr->rxHead % E1000_RING_BOUNDARY == 0) {
-		rdt = eth_io_readl(ethptr->iobase, E1000_RDT(0));
-		rdt = (rdt + E1000_RING_BOUNDARY) % ethptr->rxRingSize;
-		eth_io_writel(ethptr->iobase, E1000_RDT(0), rdt);
+	d = ((uint16 *)ethptr->rxRing)[ethptr->rxHead++];
+	if(ethptr->rxHead >= ethptr->rxRingSize) {
+		ethptr->rxHead = 0;
 	}
 
-	/* Advance the head pointing to the next ring descriptor which 	*/
-	/*  	will be ready to be picked up 				*/
-	ethptr->rxHead = (ethptr->rxHead + 1) % ethptr->rxRingSize;
+	/* Compute the length to copy */
 
-	return retval;
+	if(len > csrptr->queue[0].desc[d].len) {
+		len = csrptr->queue[0].desc[d].len;
+	}
+
+	/* Copy the packet in the provided buffer */
+
+	memcpy(buf, (byte *)csrptr->queue[0].desc[d].addr +
+				sizeof(struct virtio_net_hdr), len);
+
+	/* Compute next index in available ring */
+
+	next_id = csrptr->queue[0].avail->idx %
+				csrptr->queue[0].queue_size;
+
+	/* Add the descriptor to the available ring */
+
+	csrptr->queue[0].desc[d].flags = VIRTQ_DESC_F_WRITE;
+	csrptr->queue[0].avail->ring[next_id] = d;
+	csrptr->queue[0].avail->idx += 1;
+
+	outw((int32)&(csrptr->csr->qnotify), 0);
+
+	return len;
 }
