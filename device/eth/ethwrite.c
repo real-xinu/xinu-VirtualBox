@@ -7,12 +7,12 @@
  *------------------------------------------------------------------------
  */
 devcall	ethwrite(
-	struct	dentry	*devptr, 	/* entry in device switch table	*/
-	void	*buf,			/* buffer that holds a packet	*/
-	uint32	len			/* length of buffer		*/
+	struct	dentry	*devptr, 	/* Entry in device switch table	*/
+	void	*buf,			/* Buffer that holds a packet	*/
+	uint32	len			/* Length of buffer		*/
 	)
 {
-	struct	ethcblk	*ethptr; 	/* ptr to entry in ethertab 	*/
+	struct	ethcblk	*ethptr; 	/* Ptr to entry in ethertab 	*/
 	struct	virtio_cblk *csrptr;	/* VirtIO control block		*/
 	uint16	next_idx;		/* Next index in avail. ring	*/
 	int32	i;			/* Descriptor index		*/
@@ -35,26 +35,27 @@ devcall	ethwrite(
 
 	/* Get the index of next descriptor */
 
-	i = ((uint16 *)ethptr->txRing)[ethptr->txHead++];
-	if(ethptr->txHead >= ethptr->txRingSize) {
-		ethptr->txHead = 0;
-	}
+	i = ethptr->txHead;
+	ethptr->txHead = csrptr->queue[1].desc[i].next;
 
 	/* Copy the packet into the descriptor buffer */
 
-	memcpy((byte *)csrptr->queue[1].desc[i].addr +
-				sizeof(struct virtio_net_hdr), buf, len);
-	csrptr->queue[1].desc[i].len = sizeof(struct virtio_net_hdr) + len;
-	memset(csrptr->queue[1].desc[i].addr, 0,
-			sizeof(struct virtio_net_hdr));
-	csrptr->queue[1].desc[i].flags = 0;
+	memset((char *)((uint32)csrptr->queue[1].desc[i].addr), 0, 10);
+	csrptr->queue[1].desc[i].len = 10;
+	memcpy((char *)((uint32)csrptr->queue[1].desc[i+1].addr), 
+							(char *)buf, len);
+	csrptr->queue[1].desc[i+1].len = len;
+
+	csrptr->queue[1].desc[i].flags = VIRTQ_DESC_F_NEXT;
+	csrptr->queue[1].desc[i].next = i + 1;
 
 	/* Insert the descriptor in the available ring */
 
-	next_idx = csrptr->queue[1].avail->idx % csrptr->queue[1].queue_size;
+	next_idx = csrptr->queue[1].avail->idx %
+				csrptr->queue[1].queue_size;
 	csrptr->queue[1].avail->ring[next_idx] = i;
 
-	/* Make sure all memory operations are completed at this point */
+	/* Make sure all memory operations are completed */
 
 	__sync_synchronize();
 

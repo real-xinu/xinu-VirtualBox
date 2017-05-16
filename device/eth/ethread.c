@@ -7,15 +7,15 @@
  *------------------------------------------------------------------------
  */
 devcall	ethread(
-	struct	dentry	*devptr,	/* entry in device switch table	*/
-	void	*buf,			/* buffer to hold packet	*/
-	uint32	len			/* length of buffer		*/
+	struct	dentry	*devptr,	/* Entry in device switch table	*/
+	void	*buf,			/* Buffer to hold packet	*/
+	uint32	len			/* Length of buffer		*/
 	)
 {
-	struct 	ethcblk	*ethptr; 	/* ptr to entry in ethertab	*/
-	struct	virtio_cblk *csrptr;	/* ptr to Virtio control block	*/
-	int32	next_id;		/* next index in avail. ring	*/
-	int32	d;			/* descriptor index		*/
+	struct 	ethcblk	*ethptr; 	/* Ptr to entry in ethertab	*/
+	struct	virtio_cblk *csrptr;	/* Ptr to Virtio control block	*/
+	int32	next_id;		/* Next index in avail. ring	*/
+	int32	d;			/* Descriptor index		*/
 
 	ethptr = &ethertab[devptr->dvminor];
 
@@ -30,23 +30,21 @@ devcall	ethread(
 
 	wait(ethptr->isem);
 
-	/* Get the next descriptor index from RX ring */
+	/* Get the next descriptor index from RX Used ring */
 
-	d = ((uint16 *)ethptr->rxRing)[ethptr->rxHead++];
-	if(ethptr->rxHead >= ethptr->rxRingSize) {
-		ethptr->rxHead = 0;
-	}
+	d = ethptr->rxHead;
+	ethptr->rxHead = csrptr->queue[0].desc[d].next;
 
 	/* Compute the length to copy */
 
-	if(len > csrptr->queue[0].desc[d].len) {
-		len = csrptr->queue[0].desc[d].len;
+	if(len > csrptr->queue[0].desc[d+1].len) {
+		len = csrptr->queue[0].desc[d+1].len;
 	}
 
 	/* Copy the packet in the provided buffer */
 
-	memcpy(buf, (byte *)csrptr->queue[0].desc[d].addr +
-				sizeof(struct virtio_net_hdr), len);
+	memcpy(buf, (char *)
+			((uint32)csrptr->queue[0].desc[d+1].addr), len);
 
 	/* Compute next index in available ring */
 
@@ -55,8 +53,17 @@ devcall	ethread(
 
 	/* Add the descriptor to the available ring */
 
-	csrptr->queue[0].desc[d].flags = VIRTQ_DESC_F_WRITE;
+	csrptr->queue[0].desc[d].flags = VIRTQ_DESC_F_WRITE |
+					 VIRTQ_DESC_F_NEXT;
+	csrptr->queue[0].desc[d].next = d + 1;
+
+	csrptr->queue[0].desc[d+1].len = 1514;
+	csrptr->queue[0].desc[d+1].flags = VIRTQ_DESC_F_WRITE;
+
 	csrptr->queue[0].avail->ring[next_id] = d;
+
+	__sync_synchronize();
+
 	csrptr->queue[0].avail->idx += 1;
 
 	outw((int32)&(csrptr->csr->qnotify), 0);

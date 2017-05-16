@@ -18,5 +18,4 @@ process	main(void)
 		resume(create(shell, 4096, 20, "shell", 1, CONSOLE));
 	}
 	return OK;
-    
 }
