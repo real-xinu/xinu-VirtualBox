@@ -85,6 +85,7 @@ interrupt ethhandler(void)
 				/* Put the desc. in the avail. ring */
 
 				descptr = &csrptr->queue[0].desc[d];
+				memset((char *)((uint32)descptr->addr), 0, 10);
 				descptr->len = 10;
 				descptr->flags = VIRTQ_DESC_F_WRITE |
 						 VIRTQ_DESC_F_NEXT;

@@ -53,6 +53,8 @@ devcall	ethread(
 
 	/* Add the descriptor to the available ring */
 
+	memset((char *)((uint32)csrptr->queue[0].desc[d].addr), 0, 10);
+	csrptr->queue[0].desc[d].len = 10;
 	csrptr->queue[0].desc[d].flags = VIRTQ_DESC_F_WRITE |
 					 VIRTQ_DESC_F_NEXT;
 	csrptr->queue[0].desc[d].next = d + 1;
