@@ -21,6 +21,10 @@ void	meminit(void) {
        minheap = &end;
 
        memptr = memlist.mnext = (struct memblk *)roundmb(minheap);
+
+       memptr->mlength = (uint32)maxheap - (uint32)minheap - NULLSTK;
+       memptr->mnext = NULL;
+#if 0
        if ((char *)(maxheap+1) > HOLESTART) {
        	/* create two blocks that straddle the hole */
        	memptr->mnext = (struct memblk *)HOLEEND;
@@ -37,6 +41,6 @@ void	meminit(void) {
        	memptr->mlength = (uint32) truncmb((uint32)maxheap -
        			(uint32)&end - NULLSTK);
        }
-
+#endif
        return;
 }

@@ -3,6 +3,9 @@ extern	status	_82545EMInit(struct ethcblk *);
 extern	status	_82545EM_read_phy_reg(struct ethcblk *, uint32, uint16 *);
 extern	status	_82545EM_write_phy_reg(struct ethcblk *, uint32, uint16);
 
+/* in file acpi.c */
+extern	void	acpi_scan(void);
+
 /* in file addargs.c */
 extern	status	addargs(pid32, int32, int32[], int32,char *, void *);
 
@@ -40,6 +43,9 @@ extern	syscall	close(did32);
 
 /* in file control.c */
 extern	syscall	control(did32, int32, int32, int32);
+
+/* in file cpu.c */
+extern	void	cpu_run(int32, void (*)(void));
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
@@ -304,6 +310,10 @@ extern	bpid32	mkbufpool(int32, int32);
 /* in file mount.c */
 extern	syscall	mount(char *, char *, did32);
 extern	int32	namlen(char *, int32);
+
+/* in file msr.c */
+extern	uint64	msr_read(uint32);
+extern	void	msr_write(uint32, uint64);
 
 /* in file naminit.c */
 extern	status	naminit(void);

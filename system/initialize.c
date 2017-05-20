@@ -53,6 +53,10 @@ void	nulluser()
 
 	sysinit();
 
+	/* Scan the memory for ACPI tables */
+
+	acpi_scan();
+
 	/* Output Xinu memory layout */
 	free_mem = 0;
 	for (memptr = memlist.mnext; memptr != NULL;

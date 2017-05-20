@@ -36,6 +36,13 @@ struct	lapic_csreg {
 	  uint32 irr;
 	  uint32 res[3];
 	}	irr[8];		/* Intr. Request Regs	*/
+	uint32	esr;		/* Error Status Register*/
+	uint32	res12[27];
+	uint32	lvtcmci;	/* LVT CMCI register	*/
+	uint32	res13[3];
+	uint32	icr_low;	/* ICR Lower 32 bits	*/
+	uint32	res14[3];
+	uint32	icr_high;	/* ICR High 32 bits	*/
 };
 
 extern	volatile struct lapic_csreg *lapic;

@@ -21,6 +21,8 @@ extern	void	userret(void);
 extern	void	init8259();
 extern	int	lidt();
 
+volatile struct	lapic_csreg *lapic =
+			(volatile struct lapic_csreg *)LAPIC_BASE_ADDR;
 /*------------------------------------------------------------------------
  * initevec - initialize exception vectors to a default handler
  *------------------------------------------------------------------------
@@ -105,7 +107,7 @@ void trap(int inum)
 	intmask 	mask;
 
 	mask = disable();
-	kprintf("TRAP\n");
+	kprintf("TRAP %d\n", lapic->lapic_id >> 24);
 	asm("movl	%ebp,fp");
 	sp = fp + 15;	/* eflags/CS/eip/ebp/regs/trap#/Xtrap/ebp */
 	kprintf("Xinu trap!\n");

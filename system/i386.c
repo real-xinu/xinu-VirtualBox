@@ -44,7 +44,7 @@ void	setsegs()
 	struct sd	*psd;
 	uint32		np, npages;
 
-	npages = 4096;		/* 16 Meg for now */
+	npages = 1024*1024-1;		/* 16 Meg for now */
 	maxheap = (char *)(npages * NBPG - 1);
 
 	psd = &gdt_copy[1];	/* kernel code segment */
@@ -65,7 +65,7 @@ void	setsegs()
 	psd->sd_hilimit = npages >> 16;
 
 	memcpy(gdt, gdt_copy, sizeof(gdt_copy));
-	initsp = npages*NBPG  - 4;
+	initsp = 4096*NBPG  - 4;
 }
 
 extern	int outb(int, int);

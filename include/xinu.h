@@ -15,7 +15,10 @@
 #include <uart.h>
 #include <tty.h>
 #include <device.h>
+#include <cpu.h>
 #include <interrupt.h>
+#include <apic.h>
+#include <acpi.h>
 #include <file.h>
 #include <rfilesys.h>
 #include <rdisksys.h>
