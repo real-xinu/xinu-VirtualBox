@@ -152,3 +152,14 @@ struct	ehci_qhd {
 };
 
 #pragma pack()
+
+#define	NEHCI	1
+
+struct	ehcicblk {
+	struct	dentry *devptr;		/* Pointer in device table	*/
+	int32	pcidev;			/* PCI device handle		*/
+	struct	ehci_capreg *cpptr;	/* Capability registers		*/
+	struct	ehci_opreg *opptr;	/* Operational registers	*/
+};
+
+extern	struct ehcicblk ehcitab[];
