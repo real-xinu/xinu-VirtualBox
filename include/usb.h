@@ -41,6 +41,7 @@ struct	usb_devdesc {
 	uint16	bcddev;		/* Device release num	*/
 	byte	mfgstr;		/* Manufacturer string	*/
 	byte	prodstr;	/* Product string	*/
+	byte	sernostr;	/* Serial number string	*/
 	byte	numcfg;		/* No. of configurations*/
 };
 
@@ -74,4 +75,40 @@ struct	usb_epdesc {
 	byte	attr;		/* Attributes		*/
 	uint16	maxpktsize;	/* Max packet size	*/
 	byte	interval;	/* Polling interval	*/
+};
+
+#pragma pack()
+
+#define	USBD_HCI_EHCI		0
+
+#define	USBD_STATE_DFLT		0
+#define	USBD_STATE_ADDR		1
+#define	USBD_STATE_CFG		2
+
+#define	NUSBD			1
+
+struct	usbdcblk {
+	byte	hcitype;	/* Host controller type	*/
+	did32	hcidev;		/* Host contr. device	*/
+	byte	address;	/* Device address	*/
+	byte	state;		/* Device state		*/
+};
+
+extern	struct usbdcblk usbdtab[NUSBD];
+
+#define	USB_CTRL_TRANSFER	0
+
+#define	USB_TFR_EP_CTRL		0
+#define	USB_TFR_EP_BULK		1
+#define	USB_TFR_EP_INTR		2
+#define	USB_TFR_EP_ISO		4
+
+struct	usbtransfer {
+	struct	usbdcblk *usbdptr;/* USB device ctl blk	*/
+	byte	eptype;		/* Endpoint type	*/
+	byte	ep;		/* Endpoint number	*/
+	bool8	dirin;		/* Endpoint direction	*/
+	struct	usb_devreq *dvrq;/* USB device request	*/
+	char	*buffer;	/* Data buffer		*/
+	int32	size;		/* Data buffer size	*/
 };

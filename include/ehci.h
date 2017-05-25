@@ -20,8 +20,8 @@ struct	ehci_capreg {
 	byte	caplen;		/* Capability length	*/
 	byte	res;		/* Reserved		*/
 	uint16	hcivers;	/* HCI Version		*/
-	uint32	hcsparams;	/* Structural parameters*/
-	uint32	hccparams;	/* Capability parameters*/
+	uint32	hcsp;		/* Structural parameters*/
+	uint32	hccp;		/* Capability parameters*/
 	byte	portrrte[];	/* Port route descrip.	*/
 };
 
@@ -54,6 +54,13 @@ struct	ehci_capreg {
 #define	EHCI_USBSTS_REC		0x00002000
 #define	EHCI_USBSTS_PSS		0x00004000
 #define	EHCI_USBSTS_ASS		0x00008000
+
+#define	EHCI_USBINTR_IE		0x00000001
+#define	EHCI_USBINTR_EIE	0x00000002
+#define	EHCI_USBINTR_PCIE	0x00000004
+#define	EHCI_USBINTR_FLRE	0x00000008
+#define	EHCI_USBINTR_HSEE	0x00000010
+#define	EHCI_USBINTR_IAAE	0x00000020
 
 #define	EHCI_PSC_CCS		0x00000001
 #define	EHCI_PSC_CSC		0x00000002
@@ -115,6 +122,8 @@ struct	ehci_qtd {
 	  uint32 dt:1;		/* Data toggle		*/
 	};
 	uint32	buffer[5];	/* Buffer pointers	*/
+	void	*_next;		/* Next QTD		*/
+	void	*_start;	/* Start address	*/
 };
 
 #define	EHCI_QHD_QHLP_T		0x00000001
@@ -123,9 +132,9 @@ struct	ehci_qtd {
 #define	EHCI_QHD_QHLP_TYP_SITD	0x00000004
 #define	EHCI_QHD_QHLP_TYP_FSTN	0x00000006
 
-#define	EHCI_QHD_EPS_FULL	0x00000000
-#define	EHCI_QHD_EPS_LOW	0x00001000
-#define	EHCI_QHD_EPS_HIGH	0x00002000
+#define	EHCI_QHD_EPS_FULL	0
+#define	EHCI_QHD_EPS_LOW	1
+#define	EHCI_QHD_EPS_HIGH	2
 
 struct	ehci_qhd {
 	uint32	qhlp;		/* Horizontal pointer	*/
@@ -149,17 +158,47 @@ struct	ehci_qhd {
 	};
 	uint32	currqtd;
 	struct	ehci_qtd qtd;
+	void	*_next;		/* Next QTD		*/
+	void	*_start;	/* Start address	*/
 };
 
 #pragma pack()
 
 #define	NEHCI	1
 
+#define	EHCI_FREEQ_SIZ		100000
+
 struct	ehcicblk {
 	struct	dentry *devptr;		/* Pointer in device table	*/
 	int32	pcidev;			/* PCI device handle		*/
-	struct	ehci_capreg *cpptr;	/* Capability registers		*/
-	struct	ehci_opreg *opptr;	/* Operational registers	*/
+	volatile struct	ehci_capreg *cpptr;/* Capability registers	*/
+	volatile struct	ehci_opreg *opptr;/* Operational registers	*/
+	struct	ehci_qhd *lastqh;	/* Last Queue head in Async list*/
+	struct	ehci_qhd *freeq[EHCI_FREEQ_SIZ];
+					/* Queue of to-be-free QHs	*/
+	int32	nfree;			/* No. of elements in freeq	*/
+	int32	nused;			/* No. of QHs being used	*/
 };
 
 extern	struct ehcicblk ehcitab[];
+
+#define	EHCI_TFR_EP_CTRL	0
+#define	EHCI_TFR_EP_BULK	1
+#define	EHCI_TFR_EP_INTR	2
+#define	EHCI_TFR_EP_ISO		3
+
+/* Structure of EHCI transfer information */
+
+struct	ehcitransfer {
+	byte	devaddr;	/* USB Device address	*/
+	byte	ep;		/* If not control EP	*/
+	byte	eptype;		/* Endpoint type	*/
+	bool8	dirin;		/* EP direction		*/
+	char	*ctrlbuffer;	/* USB Device Request	*/
+	char	*buffer;	/* Data buffer		*/
+	int32	size;		/* Data buffer size	*/
+};
+
+/* Functions in ehcicontrol */
+
+#define	EHCI_CTRL_TRANSFER	0

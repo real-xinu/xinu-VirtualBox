@@ -74,6 +74,18 @@ extern int console_init(void);
 /* in file early_imr.c */
 extern int remove_irm_protections(void);
 
+/* in file ehcicontrol.c */
+extern	devcall ehcicontrol(struct dentry *, int32, int32, int32);
+
+/* in file ehcidispatch.S */
+extern	void	ehcidispatch(void);
+
+/* in file ehciinit.c */
+extern	devcall	ehciinit(struct dentry *);
+
+/* in file ehcihandler.c */
+extern	interrupt ehcihandler(void);
+
 /* in file ethcontrol.c */
 extern	devcall	ethcontrol(struct dentry *, int32, int32, int32);
 extern	void	ethIrqDisable(struct ethcblk *);
@@ -588,6 +600,9 @@ extern	void	udp_hton(struct netpacket *);
 
 /* in file unsleep.c */
 extern	syscall	unsleep(pid32);
+
+/* in file usbcontrol.c */
+extern	devcall	usbcontrol(struct dentry *, int32, int32, int32);
 
 /* in file userret.c */
 extern	void	userret(void);

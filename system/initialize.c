@@ -80,7 +80,7 @@ void	nulluser()
 
 	/* Initialize the network stack and start processes */
 
-	net_init();
+	//net_init();
 
 	/* Create a process to finish startup and start main */
 
@@ -111,7 +111,7 @@ local process	startup(void)
 
 
 	/* Use DHCP to obtain an IP address and format it */
-
+#if 0
 	ipaddr = getlocalip();
 	if ((int32)ipaddr == SYSERR) {
 		kprintf("Cannot obtain an IP address\n");
@@ -125,7 +125,7 @@ local process	startup(void)
 		kprintf("Obtained IP address  %s   (0x%08x)\n", str,
 								ipaddr);
 	}
-
+#endif
 	/* Create a process to execute function main() */
 
 	resume(create((void *)main, INITSTK, INITPRIO,

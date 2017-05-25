@@ -28,33 +28,37 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define CONSOLE              0	/* type tty      */
 #define NULLDEV              1	/* type null     */
 #define ETHER0               2	/* type eth      */
-#define NAMESPACE            3	/* type nam      */
-#define RDISK                4	/* type rds      */
-#define RAM0                 5	/* type ram      */
-#define RFILESYS             6	/* type rfs      */
-#define RFILE0               7	/* type rfl      */
-#define RFILE1               8	/* type rfl      */
-#define RFILE2               9	/* type rfl      */
-#define RFILE3              10	/* type rfl      */
-#define RFILE4              11	/* type rfl      */
-#define RFILE5              12	/* type rfl      */
-#define RFILE6              13	/* type rfl      */
-#define RFILE7              14	/* type rfl      */
-#define RFILE8              15	/* type rfl      */
-#define RFILE9              16	/* type rfl      */
-#define LFILESYS            17	/* type lfs      */
-#define LFILE0              18	/* type lfl      */
-#define LFILE1              19	/* type lfl      */
-#define LFILE2              20	/* type lfl      */
-#define LFILE3              21	/* type lfl      */
-#define LFILE4              22	/* type lfl      */
-#define LFILE5              23	/* type lfl      */
+#define EHCI                 3	/* type ehci     */
+#define USB                  4	/* type usb      */
+#define NAMESPACE            5	/* type nam      */
+#define RDISK                6	/* type rds      */
+#define RAM0                 7	/* type ram      */
+#define RFILESYS             8	/* type rfs      */
+#define RFILE0               9	/* type rfl      */
+#define RFILE1              10	/* type rfl      */
+#define RFILE2              11	/* type rfl      */
+#define RFILE3              12	/* type rfl      */
+#define RFILE4              13	/* type rfl      */
+#define RFILE5              14	/* type rfl      */
+#define RFILE6              15	/* type rfl      */
+#define RFILE7              16	/* type rfl      */
+#define RFILE8              17	/* type rfl      */
+#define RFILE9              18	/* type rfl      */
+#define LFILESYS            19	/* type lfs      */
+#define LFILE0              20	/* type lfl      */
+#define LFILE1              21	/* type lfl      */
+#define LFILE2              22	/* type lfl      */
+#define LFILE3              23	/* type lfl      */
+#define LFILE4              24	/* type lfl      */
+#define LFILE5              25	/* type lfl      */
 
 /* Control block sizes */
 
 #define	Nnull	1
 #define	Ntty	1
 #define	Neth	1
+#define	Nehci	1
+#define	Nusb	1
 #define	Nrds	1
 #define	Nram	1
 #define	Nrfs	1
@@ -63,7 +67,7 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	Nlfl	6
 #define	Nnam	1
 
-#define NDEVS 24
+#define NDEVS 26
 
 
 /* Configuration and Size Constants */

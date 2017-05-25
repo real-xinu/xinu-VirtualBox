@@ -40,6 +40,20 @@ eth:
 		-w ethwrite	-s ioerr	-n ethcontrol
 		-intr ethdispatch
 
+ehci:
+	on ehci
+		-i ehciinit	-o ioerr	-c ioerr
+		-r ioerr	-g ioerr	-p ioerr
+		-w ioerr	-s ioerr	-n ehcicontrol
+		-intr ehcidispatch
+
+usb:
+	on ehci
+		-i ionull	-o ioerr	-c ioerr
+		-r ioerr	-g ioerr	-p ioerr
+		-w ioerr	-s ioerr	-n usbcontrol
+		-intr ioerr
+
 /* type of a remote disk system device */
 rds:
 	on udp
@@ -109,6 +123,10 @@ nam:
 
    /* Physical Ethernet (raw packet transfer) */
    ETHER0 is eth   on e1000e csr 0 -irq 0 */
+
+   EHCI is ehci on ehci csr 0 -irq 0 */
+
+   USB is usb on ehci csr 0 -irq 0
 
    /* Define a namespace device */
    NAMESPACE is nam on top
