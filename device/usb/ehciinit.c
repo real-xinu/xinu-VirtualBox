@@ -25,6 +25,7 @@ devcall	ehciinit (
 		return SYSERR;
 	}
 
+	kprintf("Found EHCI controller\n");
 	pci_bios_read_config_dword(ehciptr->pcidev, 0x10, &value);
 
 	ehciptr->cpptr = (struct ehci_capreg *)(value & 0xFFFFFF00);
@@ -42,7 +43,7 @@ devcall	ehciinit (
 
 	/* Disable all interrupts for now */
 
-	ehciptr->opptr->usbintr = 0;
+	ehciptr->opptr->usbintr = EHCI_USBINTR_IE | EHCI_USBINTR_IAAE;
 
 	/* Allocate memory for periodic list */
 
@@ -52,6 +53,11 @@ devcall	ehciinit (
 	for(i = 0; i < 1024; i++) {
 		perbase[i] = 0x00000001;
 	}
+
+	value = 0;
+	pci_bios_read_config_byte(ehciptr->pcidev, 0x3C, (byte *)&value);
+
+	set_evec(IRQBASE + value, ehcidispatch);
 
 	/* Start the EHCI controller */
 
