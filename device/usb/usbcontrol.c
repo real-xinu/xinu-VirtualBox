@@ -91,3 +91,43 @@ int32	usb_get_dev_desc (
 
 	return sizeof(struct usb_devdesc);
 }
+
+/*------------------------------------------------------------------------
+ * usb_set_address  -  Set address of a USB device
+ *------------------------------------------------------------------------
+ */
+status	usb_set_address (
+		did32	devid	/* Index in device switch table	*/
+		)
+{
+	struct	usbdcblk *usbdptr;	/* USB device control block	*/
+	struct	usbtransfer utfr;	/* USB transfer information	*/
+	struct	usb_devreq *dvrq;	/* USB device request		*/
+	static	uint16 nextaddr = 1;	/* Next address to be assigned	*/
+
+	usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+
+	if(usbdptr->state > USBD_STATE_DFLT) {
+		return SYSERR;
+	}
+
+	dvrq = (struct usb_devreq *)getmem(sizeof(*dvrq));
+
+	dvrq->reqtype = 0;
+	dvrq->request = USB_DVRQ_SET_ADDR;
+	dvrq->value = nextaddr;
+	dvrq->index = 0;
+	dvrq->length = 0;
+
+	utfr.usbdptr = usbdptr;
+	utfr.eptype = USB_TFR_EP_CTRL;
+	utfr.ep = 0;
+	utfr.dirin = TRUE;
+	utfr.dvrq = dvrq;
+	utfr.buffer = NULL;
+	utfr.size = 0;
+
+	control(USB, USB_CTRL_TRANSFER, (int32)&utfr, 0);
+
+	usbdptr->address = nextaddr++;
+}

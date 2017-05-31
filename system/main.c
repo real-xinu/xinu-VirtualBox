@@ -110,7 +110,7 @@ process	main(void)
 */
 
 	struct	usb_cfgdesc cdesc;
-
+/*
 	req.reqtype = 0;
 	req.request = USB_DVRQ_SET_ADDR;
 	req.value = 10;
@@ -128,7 +128,8 @@ process	main(void)
 	//memset(&cdesc, 0, sizeof(cdesc));
 
 	control(EHCI, EHCI_CTRL_TRANSFER, (int32)&tfr, 0);
-
+*/
+/*
 	sleep(1);
 
 	req.reqtype = 0x80;
@@ -153,13 +154,16 @@ process	main(void)
 		kprintf("%02x ", *((byte *)&desc + i));
 	};
 	kprintf("\n");
-
+*/
 	usbdtab[0].hcitype = 0;
 	usbdtab[0].hcidev = EHCI;
-	usbdtab[0].address = 1;
+	usbdtab[0].address = 0;
 	usbdtab[0].state = USBD_STATE_DFLT;
 
 	devtab[USBD0].dvcsr = &usbdtab[0];
+
+	usb_set_address(USBD0);
+	kprintf("Address assigned: %d\n", usbdtab[0].address);
 
 	memset(&desc, 0, sizeof(desc));
 
