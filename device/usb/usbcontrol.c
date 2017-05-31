@@ -28,18 +28,19 @@ devcall	usbcontrol (
 	    switch(utfr->eptype) {
 	      case USB_TFR_EP_CTRL:
 	        etfr.eptype = EHCI_TFR_EP_CTRL;
+		etfr.ctrlbuffer = (char *)utfr->dvrq;
+		break;
 	      case USB_TFR_EP_BULK:
 		etfr.eptype = EHCI_TFR_EP_BULK;
+		break;
 	      case USB_TFR_EP_INTR:
 	        etfr.eptype = EHCI_TFR_EP_INTR;
+		break;
 	      case USB_TFR_EP_ISO:
 		etfr.eptype = EHCI_TFR_EP_ISO;
+		break;
 	      default:
 		return SYSERR;
-	    }
-
-	    if(utfr->eptype == USB_TFR_EP_CTRL) {
-		    etfr.ctrlbuffer = (char *)utfr->dvrq;
 	    }
 
 	    etfr.buffer = utfr->buffer;
@@ -54,4 +55,39 @@ devcall	usbcontrol (
 	}
 
 	return OK;
+}
+
+/*------------------------------------------------------------------------
+ * usb_get_dev_desc  -  Get device descriptor
+ *------------------------------------------------------------------------
+ */
+int32	usb_get_dev_desc (
+		did32	devid,	/* Index in device switch table	*/
+		char	*buf,	/* Address of buffer		*/
+		int32	size	/* Size of buffer		*/
+		)
+{
+	struct	usbtransfer utfr;	/* USB transfer information	*/
+	struct	usb_devreq *dvrq;	/* USB device request		*/
+
+	dvrq = (struct usb_devreq *)getmem(sizeof(*dvrq));
+	dvrq->reqtype = 0x80;
+	dvrq->request = USB_DVRQ_GET_DESC;
+	dvrq->value = 0x0100;
+	dvrq->index = 0;
+	dvrq->length = sizeof(struct usb_devdesc);
+
+	utfr.usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+	utfr.eptype = USB_TFR_EP_CTRL;
+	utfr.ep = 0;
+	utfr.dirin = TRUE;
+	utfr.dvrq = dvrq;
+	utfr.buffer = buf;
+	utfr.size = size;
+
+	control(USB, USB_CTRL_TRANSFER, (int32)&utfr, 0);
+
+	freemem((char *)dvrq, sizeof(*dvrq));
+
+	return sizeof(struct usb_devdesc);
 }

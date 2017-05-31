@@ -43,7 +43,7 @@ devcall	ehciinit (
 
 	/* Disable all interrupts for now */
 
-	ehciptr->opptr->usbintr = EHCI_USBINTR_IE | EHCI_USBINTR_IAAE;
+	ehciptr->opptr->usbintr = EHCI_USBINTR_IE | EHCI_USBINTR_IAAE | 0x2;
 
 	/* Allocate memory for periodic list */
 

@@ -160,6 +160,7 @@ struct	ehci_qhd {
 	struct	ehci_qtd qtd;
 	void	*_next;		/* Next QTD		*/
 	void	*_start;	/* Start address	*/
+	pid32	_pid;		/* PID of waiting proc	*/
 };
 
 #pragma pack()

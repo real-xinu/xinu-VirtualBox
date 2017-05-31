@@ -2,90 +2,172 @@
 
 #include <xinu.h>
 
+struct	usbdcblk usbdtab[1];
+
 process	main(void)
 {
 	struct	ehcicblk *ehciptr;
-	struct	usb_devreq req;
 	struct	ehcitransfer tfr;
-	char	buffer[100] = {0};
-	int32	nports;
-	int32	i;
+	struct	usb_devreq req;
+	struct	usb_devdesc desc;
+
+	ehciptr = &ehcitab[0];
+
+	ehciptr->opptr->portsc[0] |= EHCI_PSC_PR;
+	sleepms(100);
+	ehciptr->opptr->portsc[0] &= ~EHCI_PSC_PR;
+	sleepms(100);
+
+	kprintf("portsc[0]: %08x\n", ehciptr->opptr->portsc[0]);
+	kprintf("portsc[1]: %08x\n", ehciptr->opptr->portsc[1]);
 
 	req.reqtype = 0x80;
-	req.request = 6;
+	req.request = USB_DVRQ_GET_DESC;
 	req.value = 0x0100;
 	req.index = 0;
-	req.length = sizeof(struct usb_devdesc);
+	req.length = sizeof(desc);
 
 	tfr.devaddr = 0;
 	tfr.ep = 0;
 	tfr.eptype = 0;
 	tfr.dirin = 1;
-	tfr.ctrlbuffer = (char *)&req;
-	tfr.buffer = buffer;
-	tfr.size = sizeof(struct usb_devdesc);
+	tfr.ctrlbuffer = &req;
+	tfr.buffer = &desc;
+	tfr.size = sizeof(desc);
 
-	ehciptr = &ehcitab[0];
-
-	kprintf("EHCI cpptr %08x opptr %08x\n", ehciptr->cpptr, ehciptr->opptr);
-
-	nports = ehciptr->cpptr->hcsp & EHCI_HCSP_NPORTS;
-
-	int32	found = -1;
-	for(i = 0; i < nports; i++) {
-		kprintf("portsc[%d]: %08x\n", i, ehciptr->opptr->portsc[i]);
-		if(ehciptr->opptr->portsc[i] & 1) {
-			found = i;
-		}
-	}
-
-	if(found == -1) {
-		return OK;
-	}
-
-	ehciptr->opptr->portsc[found] |= EHCI_PSC_PR;
-
-	sleepms(100);
-
-	ehciptr->opptr->portsc[found] &= ~EHCI_PSC_PR;
-
-	sleepms(10);
-
-	kprintf("portsc: %08x\n", ehciptr->opptr->portsc[found]);
+	memset(&desc, 0, sizeof(desc));
 
 	control(EHCI, EHCI_CTRL_TRANSFER, (int32)&tfr, 0);
 
-	struct	ehcitransfer tfr1;
-	char	buffer1[100] = {0};
-
-	tfr1.devaddr = 0;
-	tfr1.ep = 0;
-	tfr1.eptype = 0;
-	tfr1.dirin = 1;
-	tfr1.ctrlbuffer = (char *)&req;
-	tfr1.buffer = buffer1;
-	tfr1.size = sizeof(struct usb_devdesc);
-
-	for(i = 0; i < 100; i++) {
-
-		control(EHCI, EHCI_CTRL_TRANSFER, (int32)&tfr1, 0);
+	int32	i;
+	for(i = 0; i < sizeof(desc); i++) {
+		kprintf("%02x ", *((byte *)&desc + i));
 	}
+	kprintf("\n");
+
+	req.reqtype = 0;
+	req.request = 5;
+	req.value = 10;
+	req.index = 0;
+	req.length = 0;
+
+	struct	ehci_qhd *qhd;
+	struct	ehci_qtd *qtd1, *qtd2;
+
+	qhd = getmem(32  +sizeof(*qhd));
+	qhd = (struct ehci_qhd *)(((uint32)qhd + 31) & (~31));
+
+	qtd1 = getmem(32 + sizeof(*qtd1));
+	qtd1 = (struct ehci_qtd *)(((uint32)qtd1 + 31) & (~31));
+
+	qtd2 = getmem(32 + sizeof(*qtd2));
+	qtd2 = (struct ehci_qtd *)(((uint32)qtd2 + 31) & (~31));
+
+	memset(qhd, 0, sizeof(*qhd));
+	qhd->qhlp = (uint32)qhd | EHCI_QHD_QHLP_TYP_QH;
+	qhd->devaddr = 0;
+	qhd->eps = EHCI_QHD_EPS_HIGH;
+	qhd->dtc = 1;
+	qhd->H = 1;
+	qhd->maxlen = 64;
+	qhd->qtd.next = (uint32)qtd1;
+
+	memset(qtd1, 0, sizeof(*qtd1));
+	qtd1->next = (uint32)qtd2;
+	qtd1->status = 0x80;
+	qtd1->pid = 2;
+	qtd1->cpage = 0;
+	qtd1->size = sizeof(req);
+	qtd1->dt = 0;
+	qtd1->buffer[0]= (uint32)&req;
+	qtd1->buffer[1] = ((uint32)&req & 0xFFFFF000) + 0x1000;
+
+	memset(qtd2, 0, sizeof(*qtd2));
+	qtd2->next = 1;
+	qtd2->status = 0x80;
+	qtd2->pid = 1;
+	qtd2->dt = 1;
+	qtd2->ioc = 1;
+	qtd2->size = 0;
+
+	qhd->_next = qtd1;
+	qtd1->_next = qtd2;
+	qtd2->_next = NULL;
+/*
+	sleep(1);
+
+	ehciptr->nused = 1;
+	ehciptr->lastqh = qhd;
+
+	ehciptr->opptr->asyncbase = (uint32)qhd;
 
 	ehciptr->opptr->usbcmd |= EHCI_USBCMD_ASE;
 
 	sleep(1);
 
-	struct	ehci_qhd *qh;
-	struct	ehci_qtd *qt;
+	kprintf("qtd1 sts: %x\n", qtd1->status);
+	kprintf("qtd2 sts: %x\n", qtd2->status);
+*/
 
-	qh = ehciptr->opptr->asyncbase;
+	struct	usb_cfgdesc cdesc;
 
-	qt = qh->_next;
+	req.reqtype = 0;
+	req.request = USB_DVRQ_SET_ADDR;
+	req.value = 10;
+	req.index = 0;
+	req.length = 0;
 
-	kprintf("QT status %02x\n", qt->status);
+	tfr.devaddr = 0;
+	tfr.ep = 0;
+	tfr.eptype = 0;
+	tfr.dirin = 1;
+	tfr.ctrlbuffer = &req;
+	tfr.buffer = NULL;
+	tfr.size = 0;
 
-	for(i = 0; i < sizeof(struct usb_devdesc); i++) {
-		kprintf("%02x ", *((byte *)buffer + i));
+	//memset(&cdesc, 0, sizeof(cdesc));
+
+	control(EHCI, EHCI_CTRL_TRANSFER, (int32)&tfr, 0);
+
+	sleep(1);
+
+	req.reqtype = 0x80;
+	req.request = USB_DVRQ_GET_DESC;
+	req.value = 0x0100;
+	req.index = 0;
+	req.length = sizeof(desc);
+
+	tfr.devaddr = 10;
+	tfr.ep = 0;
+	tfr.eptype = 0;
+	tfr.dirin = 1;
+	tfr.ctrlbuffer = &req;
+	tfr.buffer = &desc;
+	tfr.size = sizeof(desc);
+
+	memset(&desc, 0, sizeof(desc));
+
+	control(EHCI, EHCI_CTRL_TRANSFER, (int32)&tfr, 0);
+
+	for(i = 0; i < sizeof(desc); i++) {
+		kprintf("%02x ", *((byte *)&desc + i));
+	};
+	kprintf("\n");
+
+	usbdtab[0].hcitype = 0;
+	usbdtab[0].hcidev = EHCI;
+	usbdtab[0].address = 1;
+	usbdtab[0].state = USBD_STATE_DFLT;
+
+	devtab[USBD0].dvcsr = &usbdtab[0];
+
+	memset(&desc, 0, sizeof(desc));
+
+	kprintf("calling usb_get_dev_desc..\n");
+	usb_get_dev_desc(USBD0, &desc, sizeof(desc));
+
+	for(i = 0; i < sizeof(desc); i++) {
+		kprintf("%02x ", *((byte *)&desc + i));
 	}
 	kprintf("\n");
 

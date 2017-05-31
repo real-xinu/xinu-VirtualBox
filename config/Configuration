@@ -54,6 +54,13 @@ usb:
 		-w ioerr	-s ioerr	-n usbcontrol
 		-intr ioerr
 
+usbd:
+	on usb
+		-i ionull	-o ioerr	-c ioerr
+		-r ioerr	-g ioerr	-p ioerr
+		-w ioerr	-s ioerr	-n ioerr
+		-intr ioerr
+
 /* type of a remote disk system device */
 rds:
 	on udp
@@ -127,6 +134,12 @@ nam:
    EHCI is ehci on ehci csr 0 -irq 0 */
 
    USB is usb on ehci csr 0 -irq 0
+
+   USBD0 is usbd on usb
+   USBD1 is usbd on usb
+   USBD2 is usbd on usb
+   USBD3 is usbd on usb
+   USBD4 is usbd on usb
 
    /* Define a namespace device */
    NAMESPACE is nam on top

@@ -46,19 +46,20 @@ status	ehcitransfer (
 	struct	ehci_qhd *qhd;			/* Queue head		*/
 	struct	ehci_qtd *qtd1, *qtd2, *qtd3;	/* Queue transfer desc.	*/
 	void	*tmp;				/* Temporary ptr	*/
+	int32	retval;				/* Return value		*/
 	int32	i;				/* Loop index variable	*/
 
 	/* Allocate memory for queue head and transfer desc. */
 
-	tmp = (struct ehci_qhd *)getmem(32 + sizeof(*qhd));
+	tmp = getmem(32 + sizeof(*qhd));
 	qhd = (struct ehci_qhd *)(((uint32)tmp + 31) & (~31));
 	qhd->_start = tmp;
 
-	tmp = (struct ehci_qtd *)getmem(32 + sizeof(*qtd1));
+	tmp = getmem(32 + sizeof(*qtd1));
 	qtd1 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
 	qtd1->_start = tmp;
 
-	tmp = (struct ehci_qtd *)getmem(32 + sizeof(*qtd2));
+	tmp = getmem(32 + sizeof(*qtd2));
 	qtd2 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
 	qtd2->_start = tmp;
 
@@ -78,10 +79,6 @@ status	ehcitransfer (
 
 	if(tfrptr->eptype == EHCI_TFR_EP_CTRL) {
 
-		tmp = (struct ehci_qtd *)getmem(32 + sizeof(*qtd3));
-		qtd3 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
-		qtd3->_start = tmp;
-
 		qtd1->next = (uint32)qtd2;
 		qtd1->pid = EHCI_QTD_PID_SETUP;
 		qtd1->cpage = 0;
@@ -94,7 +91,7 @@ status	ehcitransfer (
 		}
 
 		memset(qtd2, 0, sizeof(*qtd2));
-		qtd2->next = (uint32)qtd3;
+		qtd2->next = 0x00000001;
 		qtd2->status = EHCI_QTD_STS_ACT;
 		qtd2->pid = tfrptr->dirin ? EHCI_QTD_PID_IN :
 					    EHCI_QTD_PID_OUT;
@@ -107,22 +104,60 @@ status	ehcitransfer (
 								0x1000;
 		}
 
-		memset(qtd3, 0, sizeof(*qtd3));
-		qtd3->next = 0x00000001;
-		qtd3->status = EHCI_QTD_STS_ACT;
-		qtd3->pid = tfrptr->dirin ? EHCI_QTD_PID_OUT :
-					    EHCI_QTD_PID_IN;
-		qtd3->cpage = 0;
-		qtd3->ioc = 1;
-		qtd3->size = 0;
-		qtd3->dt = 1;
+		kprintf("ehcicontrol: setup size: %d\n", qtd1->size);
+		kprintf("ehcicontrol: data/status size: %d\n", qtd2->size);
 
 		qhd->_next = qtd1;
 		qtd1->_next = qtd2;
-		qtd2->_next = qtd3;
-		qtd3->_next = NULL;
+		qtd2->_next = NULL;
+
+		if(tfrptr->size > 0) {
+
+			tmp = (struct ehci_qtd *)getmem(32 + sizeof(*qtd3));
+			qtd3 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
+			qtd3->_start = tmp;
+
+			qtd2->next = (uint32)qtd3;
+			memset(qtd3, 0, sizeof(*qtd3));
+			qtd3->next = 0x00000001;
+			qtd3->status = EHCI_QTD_STS_ACT;
+			qtd3->pid = tfrptr->dirin ? EHCI_QTD_PID_OUT :
+						    EHCI_QTD_PID_IN;
+			qtd3->cpage = 0;
+			qtd3->ioc = 1;
+			qtd3->size = 0;
+			qtd3->dt = 1;
+
+			kprintf("ehcicontrol: status size: 0\n");
+			qtd2->_next = qtd3;
+			qtd3->_next = NULL;
+		}
+		else {
+			qtd2->ioc = 1;
+			qtd2->pid = EHCI_QTD_PID_IN;
+			qtd2->size = 0;
+		}
+
+		qhd->_pid = getpid();
+
+		recvclr();
 
 		ehciasync_add(ehciptr, qhd);
+
+		retval = receive();
+		if(retval == SYSERR) {
+			return SYSERR;
+		}
+
+		kprintf("ehcicontrol: qhd qtd size: %d\n", qhd->qtd.size);
+		kprintf("ehcicontrol: qtd1 size: %d\n", qtd1->size);
+		kprintf("ehcicontrol: qtd2 size: %d\n", qtd2->size);
+		kprintf("ehcicontrol: qtd3 size: %d\n", qtd3->size);
+
+		freemem((char *)qhd->_start, 32 + sizeof(*qhd));
+		freemem((char *)qtd1->_start, 32 + sizeof(*qtd1));
+		freemem((char *)qtd2->_start, 32 + sizeof(*qtd2));
+		freemem((char *)qtd3->_start, 32 + sizeof(*qtd3));
 	}
 
 	return OK;
@@ -152,7 +187,7 @@ status	ehciasync_add (
 
 		ehciptr->opptr->asyncbase = (uint32)qhd;
 
-		//ehciptr->opptr->usbcmd |= EHCI_USBCMD_ASE;
+		ehciptr->opptr->usbcmd |= EHCI_USBCMD_ASE;
 
 		return OK;
 	}

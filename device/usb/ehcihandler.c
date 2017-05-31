@@ -21,7 +21,7 @@ interrupt ehcihandler (void) {
 
 	status = ehciptr->opptr->usbsts;
 
-	if(status & EHCI_USBSTS_INT) {
+	if(status & EHCI_USBSTS_INT || status & 0x2) {
 
 		ehciptr->opptr->usbsts = EHCI_USBSTS_INT;
 
@@ -30,13 +30,14 @@ interrupt ehcihandler (void) {
 
 		kprintf("ehcihandler: nused: %d\n", ehciptr->nused);
 		ehciptr->nfree = 0;
-		for(i = 0; i < ehciptr->nused-1; i++) {
+		for(i = 0; i < ehciptr->nused; i++) {
 
 			retired = TRUE;
 			qtd = (struct ehci_qtd *)curr->_next;
 
 			while(qtd != NULL) {
 
+				kprintf("\tqtd sts: %x\n", qtd->status);
 				if(qtd->status & EHCI_QTD_STS_ACT) {
 					retired = FALSE;
 					break;
@@ -61,6 +62,9 @@ interrupt ehcihandler (void) {
 		if(ehciptr->nused <= 0) {
 			ehciptr->nused = 0;
 			ehciptr->opptr->usbcmd &= ~EHCI_USBCMD_ASE;
+			for(i = 0; i < ehciptr->nfree; i++) {
+				send(ehciptr->freeq[i]->_pid, OK);
+			}
 		}
 		else {
 			ehciptr->lastqh->qhlp = (uint32)curr | EHCI_QHD_QHLP_TYP_QH;
@@ -78,18 +82,7 @@ interrupt ehcihandler (void) {
 		ehciptr->opptr->usbsts = EHCI_USBSTS_IAA;
 
 		for(i = 0; i < ehciptr->nfree; i++) {
-
-			curr = ehciptr->freeq[i];
-			qtd = (struct ehci_qtd *)curr->_next;
-
-			freemem((char *)curr->_start, 32 + sizeof(*curr));
-
-			while(qtd != NULL) {
-
-				qtd = (struct ehci_qtd *)qtd->_next;
-
-				freemem((char *)qtd->_start, 32 + sizeof(*qtd));
-			}
+			send(ehciptr->freeq[i]->_pid, OK);
 		}
 	}
 }
