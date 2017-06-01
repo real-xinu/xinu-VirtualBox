@@ -89,6 +89,7 @@ int32	usb_get_dev_desc (
 
 	freemem((char *)dvrq, sizeof(*dvrq));
 
+	//TODO
 	return sizeof(struct usb_devdesc);
 }
 
@@ -130,4 +131,49 @@ status	usb_set_address (
 	control(USB, USB_CTRL_TRANSFER, (int32)&utfr, 0);
 
 	usbdptr->address = nextaddr++;
+
+	freemem((char *)dvrq, sizeof(*dvrq));
+
+	return OK;
+}
+
+/*------------------------------------------------------------------------
+ * usb_get_cfg_desc  -  Get configuration descriptor from USB device
+ *------------------------------------------------------------------------
+ */
+int32	usb_get_cfg_desc (
+		did32	devid,	/* Index in device switch table	*/
+		int32	cfgid,	/* Configuration index		*/
+		char	*buf,	/* Buffer to store descriptor	*/
+		int32	size	/* Size of buffer in bytes	*/
+		)
+{
+	struct	usbtransfer utfr;	/* USB transfer information	*/
+	struct	usb_devreq *dvrq;	/* USB device request		*/
+	struct	usbdcblk *usbdptr;	/* USB device control block	*/
+
+	usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+
+	dvrq = (struct usb_devreq *)getmem(sizeof(*dvrq));
+
+	dvrq->reqtype = 0x80;
+	dvrq->request = USB_DVRQ_GET_DESC;
+	dvrq->value = 0x0200 | (uint16)((byte)cfgid);
+	dvrq->index = 0;
+	dvrq->length = size;
+
+	utfr.usbdptr = usbdptr;
+	utfr.eptype = USB_TFR_EP_CTRL;
+	utfr.ep = 0;
+	utfr.dirin = TRUE;
+	utfr.dvrq = dvrq;
+	utfr.buffer = buf;
+	utfr.size = size;
+
+	control(USB, USB_CTRL_TRANSFER, (int32)&utfr, 0);
+
+	freemem((char *)dvrq, sizeof(*dvrq));
+
+	//TODO
+	return 1;
 }

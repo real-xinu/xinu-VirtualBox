@@ -20,7 +20,7 @@ process	main(void)
 
 	kprintf("portsc[0]: %08x\n", ehciptr->opptr->portsc[0]);
 	kprintf("portsc[1]: %08x\n", ehciptr->opptr->portsc[1]);
-
+/*
 	req.reqtype = 0x80;
 	req.request = USB_DVRQ_GET_DESC;
 	req.value = 0x0100;
@@ -93,6 +93,7 @@ process	main(void)
 	qhd->_next = qtd1;
 	qtd1->_next = qtd2;
 	qtd2->_next = NULL;
+*/
 /*
 	sleep(1);
 
@@ -109,7 +110,7 @@ process	main(void)
 	kprintf("qtd2 sts: %x\n", qtd2->status);
 */
 
-	struct	usb_cfgdesc cdesc;
+	//struct	usb_cfgdesc cdesc;
 /*
 	req.reqtype = 0;
 	req.request = USB_DVRQ_SET_ADDR;
@@ -155,6 +156,7 @@ process	main(void)
 	};
 	kprintf("\n");
 */
+
 	usbdtab[0].hcitype = 0;
 	usbdtab[0].hcidev = EHCI;
 	usbdtab[0].address = 0;
@@ -162,9 +164,13 @@ process	main(void)
 
 	devtab[USBD0].dvcsr = &usbdtab[0];
 
+	usb_get_dev_desc(USBD0, &desc, sizeof(desc));
+	kprintf("Vendor ID: %04x\n", desc.vendid);
+	kprintf("Product ID: %04x\n", desc.prodid);
+
 	usb_set_address(USBD0);
 	kprintf("Address assigned: %d\n", usbdtab[0].address);
-
+/*
 	memset(&desc, 0, sizeof(desc));
 
 	kprintf("calling usb_get_dev_desc..\n");
@@ -174,6 +180,37 @@ process	main(void)
 		kprintf("%02x ", *((byte *)&desc + i));
 	}
 	kprintf("\n");
+*/
+	char	buf[100];
+	struct	usb_cfgdesc *cdesc;
+
+	usb_get_cfg_desc(USBD0, 0, buf, sizeof(*cdesc));
+
+	cdesc = (struct usb_cfgdesc *)buf;
+	kprintf("Cfg desc: total length %d\n", cdesc->totallen);
+
+	usb_get_cfg_desc(USBD0, 0, buf, cdesc->totallen);
+
+	byte	*ptr;
+
+	ptr = (byte *)(cdesc+1);
+
+	while(ptr < (byte *)cdesc + cdesc->totallen) {
+
+		if(*(ptr+1) == 4) {
+			kprintf("Interface:\n");
+			kprintf("\tnum: %d\n", ((struct usb_intfdesc *)ptr)->intfnum);
+			kprintf("\t#ep: %d\n", ((struct usb_intfdesc *)ptr)->numep);
+		}
+		else if(*(ptr+1) == 5) {
+			kprintf("Endpoint:\n");
+			kprintf("\tep addr: %02x\n", ((struct usb_epdesc *)ptr)->epaddr);
+			kprintf("\tattr: %02x\n", ((struct usb_epdesc *)ptr)->attr);
+			kprintf("\tmaxpktsize: %d\n", ((struct usb_epdesc *)ptr)->maxpktsize);
+		}
+
+		ptr += *ptr;
+	}
 
 	/* Run the Xinu shell */
 
