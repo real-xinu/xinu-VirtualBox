@@ -212,6 +212,8 @@ process	main(void)
 		ptr += *ptr;
 	}
 
+	usb_set_cfg(USBD0, cdesc->cfgvalue);
+
 	/* Run the Xinu shell */
 
 	recvclr();

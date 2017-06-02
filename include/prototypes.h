@@ -604,6 +604,9 @@ extern	syscall	unsleep(pid32);
 /* in file usbcontrol.c */
 extern	devcall	usbcontrol(struct dentry *, int32, int32, int32);
 
+/* in file usbepinit.c */
+extern	devcall	usbepinit(struct dentry *);
+
 /* in file userret.c */
 extern	void	userret(void);
 

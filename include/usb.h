@@ -79,6 +79,34 @@ struct	usb_epdesc {
 
 #pragma pack()
 
+#define	USBEP_STATE_FREE	0
+#define	USBEP_STATE_USED	1
+
+struct	usbepcblk {
+	byte	state;		/* Used or free		*/
+	did32	devid;		/* Index in device table*/
+	struct	usbdcblk *usbdptr;
+				/* USB device ctrl blk	*/
+	struct	usbep *epptr;	/* USB endpoint info	*/
+};
+
+#define	USBEP_DIR_OUT		0
+#define	USBEP_DIR_IN		1
+
+#define	MAX_USBD_EP		16
+
+#define	USBEP_TYPE_CTRL		0
+#define	USBEP_TYPE_ISO		1
+#define	USBEP_TYPE_BULK		2
+#define	USBEP_TYPE_INTR		3
+
+struct	usbep {
+	byte	addr;		/* Endpoint address	*/
+	byte	type;		/* Endpoint type	*/
+	byte	dir;		/* ENdpoint direction	*/
+	did32	devid;		/* Device index		*/
+};
+
 #define	USBD_HCI_EHCI		0
 
 #define	USBD_STATE_DFLT		0
@@ -88,20 +116,27 @@ struct	usb_epdesc {
 #define	NUSBD			1
 
 struct	usbdcblk {
-	byte	hcitype;	/* Host controller type	*/
-	did32	hcidev;		/* Host contr. device	*/
-	byte	address;	/* Device address	*/
-	byte	state;		/* Device state		*/
+	byte	hcitype;		/* Host controller type	*/
+	did32	hcidev;			/* Host contr. device	*/
+	byte	address;		/* Device address	*/
+	byte	state;			/* Device state		*/
+	struct	usb_devdesc *devdesc;	/* Device descriptor	*/
+	struct	usb_cfgdesc *cfgdesc;	/* Config. descriptor	*/
+	struct	usbep ep[MAX_USBD_EP];	/* Device endpoints	*/
+	int32	nep;			/* No. of endpoints	*/
 };
 
 extern	struct usbdcblk usbdtab[NUSBD];
 
+#define	NUSBEP	(NUSBD * MAX_USBD_EP)
+extern	struct	usbepcblk usbeptab[NUSBEP];
+
 #define	USB_CTRL_TRANSFER	0
 
 #define	USB_TFR_EP_CTRL		0
-#define	USB_TFR_EP_BULK		1
-#define	USB_TFR_EP_INTR		2
-#define	USB_TFR_EP_ISO		4
+#define	USB_TFR_EP_ISO		1
+#define	USB_TFR_EP_BULK		2
+#define	USB_TFR_EP_INTR		4
 
 struct	usbtransfer {
 	struct	usbdcblk *usbdptr;/* USB device ctl blk	*/

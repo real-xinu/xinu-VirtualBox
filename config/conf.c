@@ -61,176 +61,260 @@ struct	dentry	devtab[NDEVS] =
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
-/* USBD1 is usbd */
-	{ 6, 1, "USBD1",
-	  (void *)ionull, (void *)ioerr, (void *)ioerr,
+/* USBEP0 is usbep */
+	{ 6, 0, "USBEP0",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
-/* USBD2 is usbd */
-	{ 7, 2, "USBD2",
-	  (void *)ionull, (void *)ioerr, (void *)ioerr,
+/* USBEP1 is usbep */
+	{ 7, 1, "USBEP1",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
-/* USBD3 is usbd */
-	{ 8, 3, "USBD3",
-	  (void *)ionull, (void *)ioerr, (void *)ioerr,
+/* USBEP2 is usbep */
+	{ 8, 2, "USBEP2",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
-/* USBD4 is usbd */
-	{ 9, 4, "USBD4",
-	  (void *)ionull, (void *)ioerr, (void *)ioerr,
+/* USBEP3 is usbep */
+	{ 9, 3, "USBEP3",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP4 is usbep */
+	{ 10, 4, "USBEP4",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP5 is usbep */
+	{ 11, 5, "USBEP5",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP6 is usbep */
+	{ 12, 6, "USBEP6",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP7 is usbep */
+	{ 13, 7, "USBEP7",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP8 is usbep */
+	{ 14, 8, "USBEP8",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP9 is usbep */
+	{ 15, 9, "USBEP9",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP10 is usbep */
+	{ 16, 10, "USBEP10",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP11 is usbep */
+	{ 17, 11, "USBEP11",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP12 is usbep */
+	{ 18, 12, "USBEP12",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP13 is usbep */
+	{ 19, 13, "USBEP13",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP14 is usbep */
+	{ 20, 14, "USBEP14",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
+	  (void *)0x0, (void *)ioerr, 0 },
+
+/* USBEP15 is usbep */
+	{ 21, 15, "USBEP15",
+	  (void *)usbepinit, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
 /* NAMESPACE is nam */
-	{ 10, 0, "NAMESPACE",
+	{ 22, 0, "NAMESPACE",
 	  (void *)naminit, (void *)namopen, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0 },
 
 /* RDISK is rds */
-	{ 11, 0, "RDISK",
+	{ 23, 0, "RDISK",
 	  (void *)rdsinit, (void *)rdsopen, (void *)rdsclose,
 	  (void *)rdsread, (void *)rdswrite, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)rdscontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RAM0 is ram */
-	{ 12, 0, "RAM0",
+	{ 24, 0, "RAM0",
 	  (void *)raminit, (void *)ramopen, (void *)ramclose,
 	  (void *)ramread, (void *)ramwrite, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILESYS is rfs */
-	{ 13, 0, "RFILESYS",
+	{ 25, 0, "RFILESYS",
 	  (void *)rfsinit, (void *)rfsopen, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)rfscontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE0 is rfl */
-	{ 14, 0, "RFILE0",
+	{ 26, 0, "RFILE0",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE1 is rfl */
-	{ 15, 1, "RFILE1",
+	{ 27, 1, "RFILE1",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE2 is rfl */
-	{ 16, 2, "RFILE2",
+	{ 28, 2, "RFILE2",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE3 is rfl */
-	{ 17, 3, "RFILE3",
+	{ 29, 3, "RFILE3",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE4 is rfl */
-	{ 18, 4, "RFILE4",
+	{ 30, 4, "RFILE4",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE5 is rfl */
-	{ 19, 5, "RFILE5",
+	{ 31, 5, "RFILE5",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE6 is rfl */
-	{ 20, 6, "RFILE6",
+	{ 32, 6, "RFILE6",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE7 is rfl */
-	{ 21, 7, "RFILE7",
+	{ 33, 7, "RFILE7",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE8 is rfl */
-	{ 22, 8, "RFILE8",
+	{ 34, 8, "RFILE8",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* RFILE9 is rfl */
-	{ 23, 9, "RFILE9",
+	{ 35, 9, "RFILE9",
 	  (void *)rflinit, (void *)ioerr, (void *)rflclose,
 	  (void *)rflread, (void *)rflwrite, (void *)rflseek,
 	  (void *)rflgetc, (void *)rflputc, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILESYS is lfs */
-	{ 24, 0, "LFILESYS",
+	{ 36, 0, "LFILESYS",
 	  (void *)lfsinit, (void *)lfsopen, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE0 is lfl */
-	{ 25, 0, "LFILE0",
+	{ 37, 0, "LFILE0",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE1 is lfl */
-	{ 26, 1, "LFILE1",
+	{ 38, 1, "LFILE1",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE2 is lfl */
-	{ 27, 2, "LFILE2",
+	{ 39, 2, "LFILE2",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE3 is lfl */
-	{ 28, 3, "LFILE3",
+	{ 40, 3, "LFILE3",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE4 is lfl */
-	{ 29, 4, "LFILE4",
+	{ 41, 4, "LFILE4",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE5 is lfl */
-	{ 30, 5, "LFILE5",
+	{ 42, 5, "LFILE5",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,

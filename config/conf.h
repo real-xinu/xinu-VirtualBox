@@ -31,31 +31,43 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define EHCI                 3	/* type ehci     */
 #define USB                  4	/* type usb      */
 #define USBD0                5	/* type usbd     */
-#define USBD1                6	/* type usbd     */
-#define USBD2                7	/* type usbd     */
-#define USBD3                8	/* type usbd     */
-#define USBD4                9	/* type usbd     */
-#define NAMESPACE           10	/* type nam      */
-#define RDISK               11	/* type rds      */
-#define RAM0                12	/* type ram      */
-#define RFILESYS            13	/* type rfs      */
-#define RFILE0              14	/* type rfl      */
-#define RFILE1              15	/* type rfl      */
-#define RFILE2              16	/* type rfl      */
-#define RFILE3              17	/* type rfl      */
-#define RFILE4              18	/* type rfl      */
-#define RFILE5              19	/* type rfl      */
-#define RFILE6              20	/* type rfl      */
-#define RFILE7              21	/* type rfl      */
-#define RFILE8              22	/* type rfl      */
-#define RFILE9              23	/* type rfl      */
-#define LFILESYS            24	/* type lfs      */
-#define LFILE0              25	/* type lfl      */
-#define LFILE1              26	/* type lfl      */
-#define LFILE2              27	/* type lfl      */
-#define LFILE3              28	/* type lfl      */
-#define LFILE4              29	/* type lfl      */
-#define LFILE5              30	/* type lfl      */
+#define USBEP0               6	/* type usbep    */
+#define USBEP1               7	/* type usbep    */
+#define USBEP2               8	/* type usbep    */
+#define USBEP3               9	/* type usbep    */
+#define USBEP4              10	/* type usbep    */
+#define USBEP5              11	/* type usbep    */
+#define USBEP6              12	/* type usbep    */
+#define USBEP7              13	/* type usbep    */
+#define USBEP8              14	/* type usbep    */
+#define USBEP9              15	/* type usbep    */
+#define USBEP10             16	/* type usbep    */
+#define USBEP11             17	/* type usbep    */
+#define USBEP12             18	/* type usbep    */
+#define USBEP13             19	/* type usbep    */
+#define USBEP14             20	/* type usbep    */
+#define USBEP15             21	/* type usbep    */
+#define NAMESPACE           22	/* type nam      */
+#define RDISK               23	/* type rds      */
+#define RAM0                24	/* type ram      */
+#define RFILESYS            25	/* type rfs      */
+#define RFILE0              26	/* type rfl      */
+#define RFILE1              27	/* type rfl      */
+#define RFILE2              28	/* type rfl      */
+#define RFILE3              29	/* type rfl      */
+#define RFILE4              30	/* type rfl      */
+#define RFILE5              31	/* type rfl      */
+#define RFILE6              32	/* type rfl      */
+#define RFILE7              33	/* type rfl      */
+#define RFILE8              34	/* type rfl      */
+#define RFILE9              35	/* type rfl      */
+#define LFILESYS            36	/* type lfs      */
+#define LFILE0              37	/* type lfl      */
+#define LFILE1              38	/* type lfl      */
+#define LFILE2              39	/* type lfl      */
+#define LFILE3              40	/* type lfl      */
+#define LFILE4              41	/* type lfl      */
+#define LFILE5              42	/* type lfl      */
 
 /* Control block sizes */
 
@@ -64,7 +76,8 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	Neth	1
 #define	Nehci	1
 #define	Nusb	1
-#define	Nusbd	5
+#define	Nusbd	1
+#define	Nusbep	16
 #define	Nrds	1
 #define	Nram	1
 #define	Nrfs	1
@@ -73,7 +86,7 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	Nlfl	6
 #define	Nnam	1
 
-#define NDEVS 31
+#define NDEVS 43
 
 
 /* Configuration and Size Constants */

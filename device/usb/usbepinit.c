@@ -2,6 +2,8 @@
 
 #include <xinu.h>
 
+struct	usbepcblk usbeptab[NUSBEP];
+
 /*------------------------------------------------------------------------
  * usbepinit  -  Initialize USB endpoint device
  *------------------------------------------------------------------------

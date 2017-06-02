@@ -61,6 +61,13 @@ usbd:
 		-w ioerr	-s ioerr	-n ioerr
 		-intr ioerr
 
+usbep:
+	on usbd
+		-i usbepinit	-o ioerr	-c ioerr
+		-r ioerr	-g ioerr	-p ioerr
+		-w ioerr	-s ioerr	-n ioerr
+		-intr ioerr
+
 /* type of a remote disk system device */
 rds:
 	on udp
@@ -136,10 +143,23 @@ nam:
    USB is usb on ehci csr 0 -irq 0
 
    USBD0 is usbd on usb
-   USBD1 is usbd on usb
-   USBD2 is usbd on usb
-   USBD3 is usbd on usb
-   USBD4 is usbd on usb
+
+   USBEP0 is usbep on usbd
+   USBEP1 is usbep on usbd
+   USBEP2 is usbep on usbd
+   USBEP3 is usbep on usbd
+   USBEP4 is usbep on usbd
+   USBEP5 is usbep on usbd
+   USBEP6 is usbep on usbd
+   USBEP7 is usbep on usbd
+   USBEP8 is usbep on usbd
+   USBEP9 is usbep on usbd
+   USBEP10 is usbep on usbd
+   USBEP11 is usbep on usbd
+   USBEP12 is usbep on usbd
+   USBEP13 is usbep on usbd
+   USBEP14 is usbep on usbd
+   USBEP15 is usbep on usbd
 
    /* Define a namespace device */
    NAMESPACE is nam on top
