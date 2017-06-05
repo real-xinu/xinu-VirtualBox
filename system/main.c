@@ -4,6 +4,25 @@
 
 struct	usbdcblk usbdtab[1];
 
+#pragma pack(1)
+struct	umscbw {
+	uint32	sig;
+	uint32	tag;
+	uint32	tlen;
+	byte	flag;
+	byte	lun;
+	byte	cblen;
+	byte	cb[16];
+};
+
+struct	umscbs {
+	uint32	sig;
+	uint32	tag;
+	uint32	datares;
+	byte	status;
+};
+#pragma pack()
+
 process	main(void)
 {
 	struct	ehcicblk *ehciptr;
@@ -214,6 +233,41 @@ process	main(void)
 
 	usb_set_cfg(USBD0, cdesc->cfgvalue);
 
+	did32	ep_in, ep_out;
+
+	if(usbdtab[0].ep[0].dir == USBEP_DIR_IN) {
+		ep_in = usbdtab[0].ep[0].devid;
+		ep_out = usbdtab[0].ep[1].devid;
+	}
+	else {
+		ep_in = usbdtab[0].ep[1].devid;
+		ep_out = usbdtab[0].ep[0].devid;
+	}
+
+	kprintf("In EP: %d Out EP: %d\n", ep_in, ep_out);
+
+	struct	umscbw cbw;
+	struct	umscbs csw;
+
+	cbw.sig = 0x43425355;
+	cbw.tag = 0x22333322;
+	cbw.tlen = 0;
+	cbw.flag = 0;
+	cbw.lun = 0;
+	cbw.cblen = 6;
+	memset(cbw.cb, 0, 6);
+
+	write(ep_out, &cbw, 31);
+
+	memset(&csw, 0, sizeof(csw));
+
+	read(ep_in, &csw, sizeof(csw));
+
+	int32	i;
+	for(i = 0; i < sizeof(csw); i++) {
+		kprintf("%02x ", *((byte *)&csw + i));
+	}
+	kprintf("\n");
 	/* Run the Xinu shell */
 
 	recvclr();

@@ -77,6 +77,8 @@ status	ehcitransfer (
 	memset(qtd1, 0, sizeof(*qtd1));
 	qtd1->status = EHCI_QTD_STS_ACT;
 
+	qtd2 = qtd3 = NULL;
+
 	if(tfrptr->eptype == EHCI_TFR_EP_CTRL) {
 
 		qtd1->next = (uint32)qtd2;
@@ -137,27 +139,45 @@ status	ehcitransfer (
 			qtd2->pid = EHCI_QTD_PID_IN;
 			qtd2->size = 0;
 		}
+	}
+	else if(tfrptr->eptype == EHCI_TFR_EP_BULK) {
 
-		qhd->_pid = getpid();
-
-		recvclr();
-
-		ehciasync_add(ehciptr, qhd);
-
-		retval = receive();
-		if(retval == SYSERR) {
-			return SYSERR;
+		kprintf("ehcicontrol: bulk transfer..\n");
+		qtd1->next = 0x1;
+		qtd1->altnext = 0x1;
+		qtd1->pid = tfrptr->dirin ? EHCI_QTD_PID_IN :
+					    EHCI_QTD_PID_OUT;
+		qtd1->ioc = 1;
+		qtd1->size = tfrptr->size;
+		//TODO
+		qtd1->dt = 1;
+		qtd1->buffer[0] = (uint32)tfrptr->buffer;
+		for(i = 0; i < 4; i++) {
+			qtd1->buffer[i+1] = ((uint32)qtd1->buffer[i] & 0xFFFFF000) + 0x1000;
 		}
+	}
 
-		kprintf("ehcicontrol: qhd qtd size: %d\n", qhd->qtd.size);
-		kprintf("ehcicontrol: qtd1 size: %d\n", qtd1->size);
-		kprintf("ehcicontrol: qtd2 size: %d\n", qtd2->size);
-		kprintf("ehcicontrol: qtd3 size: %d\n", qtd3->size);
+	qhd->_pid = getpid();
 
-		freemem((char *)qhd->_start, 32 + sizeof(*qhd));
-		freemem((char *)qtd1->_start, 32 + sizeof(*qtd1));
-		freemem((char *)qtd2->_start, 32 + sizeof(*qtd2));
-		freemem((char *)qtd3->_start, 32 + sizeof(*qtd3));
+	recvclr();
+
+	ehciasync_add(ehciptr, qhd);
+
+	retval = receive();
+
+	freemem((char *)qhd, 32 + sizeof(*qhd));
+	freemem((char *)qtd1, 32 + sizeof(*qtd1));
+
+	if(qtd2) {
+		freemem((char *)qtd2, 32 + sizeof(*qtd2));
+	}
+
+	if(qtd3) {
+		freemem((char *)qtd3, 32 + sizeof(*qtd3));
+	}
+
+	if(retval == SYSERR) {
+		return SYSERR;
 	}
 
 	return OK;

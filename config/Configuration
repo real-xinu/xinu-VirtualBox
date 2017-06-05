@@ -64,8 +64,8 @@ usbd:
 usbep:
 	on usbd
 		-i usbepinit	-o ioerr	-c ioerr
-		-r ioerr	-g ioerr	-p ioerr
-		-w ioerr	-s ioerr	-n ioerr
+		-r usbepread	-g ioerr	-p ioerr
+		-w usbepwrite	-s ioerr	-n ioerr
 		-intr ioerr
 
 /* type of a remote disk system device */

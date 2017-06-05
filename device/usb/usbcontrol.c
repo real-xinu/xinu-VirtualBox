@@ -280,6 +280,8 @@ status	usb_set_cfg (
 
 			kprintf("Creating an endpoint device: %d\n", usbeptab[i].devid);
 			usbeptab[i].state = USBEP_STATE_USED;
+			usbeptab[i].usbdptr = usbdptr;
+			usbeptab[i].epptr = &usbdptr->ep[j];
 
 			usbdptr->ep[j].addr = epdesc->epaddr & 0x0F;
 			usbdptr->ep[j].dir = epdesc->epaddr & 0x80 ?
@@ -287,7 +289,9 @@ status	usb_set_cfg (
 						USBEP_DIR_OUT;
 			usbdptr->ep[j].type = epdesc->attr & 0x03;
 			usbdptr->ep[j].devid = usbeptab[i].devid;
+			j++;
 			kprintf("\tep addr: %d\n", epdesc->epaddr &0x0F);
+			kprintf("\tep attr: %x\n", epdesc->attr);
 		}
 
 		ptr += (*ptr);
