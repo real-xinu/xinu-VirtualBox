@@ -17,7 +17,7 @@ interrupt ehcihandler (void) {
 
 	ehciptr = &ehcitab[0];
 
-	kprintf("EHCI interrupt: %08x\n", ehciptr->opptr->usbsts);
+	//kprintf("EHCI interrupt: %08x\n", ehciptr->opptr->usbsts);
 
 	status = ehciptr->opptr->usbsts;
 
@@ -28,7 +28,7 @@ interrupt ehcihandler (void) {
 		curr = (struct ehci_qhd *)((uint32)ehciptr->lastqh->qhlp &
 							0xFFFFFFE0);
 
-		kprintf("ehcihandler: nused: %d\n", ehciptr->nused);
+		//kprintf("ehcihandler: nused: %d\n", ehciptr->nused);
 		ehciptr->nfree = 0;
 		for(i = 0; i < ehciptr->nused; i++) {
 
@@ -37,7 +37,7 @@ interrupt ehcihandler (void) {
 
 			while(qtd != NULL) {
 
-				kprintf("\tqtd sts: %x\n", qtd->status);
+				//kprintf("\tqtd sts: %x\n", qtd->status);
 				if(qtd->status & EHCI_QTD_STS_ACT) {
 					retired = FALSE;
 					break;
@@ -55,7 +55,7 @@ interrupt ehcihandler (void) {
 			curr = (struct ehci_qhd *)((uint32)curr->qhlp & 0xFFFFFFE0);
 		}
 
-		kprintf("\tethhandler: completed: %d\n", ehciptr->nfree);
+		//kprintf("\tethhandler: completed: %d\n", ehciptr->nfree);
 
 		ehciptr->nused -= ehciptr->nfree;
 
@@ -77,7 +77,7 @@ interrupt ehcihandler (void) {
 	}
 
 	if(status & EHCI_USBSTS_IAA) {
-		kprintf("ehcihandler: doorbell\n");
+		//kprintf("ehcihandler: doorbell\n");
 
 		ehciptr->opptr->usbsts = EHCI_USBSTS_IAA;
 

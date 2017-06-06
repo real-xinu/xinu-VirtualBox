@@ -170,7 +170,7 @@ struct	ehci_qhd {
 #define	EHCI_FREEQ_SIZ		100000
 
 struct	ehcicblk {
-	struct	dentry *devptr;		/* Pointer in device table	*/
+	did32	devid	;		/* Index in device table	*/
 	int32	pcidev;			/* PCI device handle		*/
 	volatile struct	ehci_capreg *cpptr;/* Capability registers	*/
 	volatile struct	ehci_opreg *opptr;/* Operational registers	*/
@@ -203,3 +203,5 @@ struct	ehcitransfer {
 /* Functions in ehcicontrol */
 
 #define	EHCI_CTRL_TRANSFER	0
+
+#define	EHCI_TRANSFER_TIMEOUT	1000

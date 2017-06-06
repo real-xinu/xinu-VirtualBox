@@ -106,8 +106,8 @@ status	ehcitransfer (
 								0x1000;
 		}
 
-		kprintf("ehcicontrol: setup size: %d\n", qtd1->size);
-		kprintf("ehcicontrol: data/status size: %d\n", qtd2->size);
+		//kprintf("ehcicontrol: setup size: %d\n", qtd1->size);
+		//kprintf("ehcicontrol: data/status size: %d\n", qtd2->size);
 
 		qhd->_next = qtd1;
 		qtd1->_next = qtd2;
@@ -130,7 +130,7 @@ status	ehcitransfer (
 			qtd3->size = 0;
 			qtd3->dt = 1;
 
-			kprintf("ehcicontrol: status size: 0\n");
+			//kprintf("ehcicontrol: status size: 0\n");
 			qtd2->_next = qtd3;
 			qtd3->_next = NULL;
 		}
@@ -142,7 +142,7 @@ status	ehcitransfer (
 	}
 	else if(tfrptr->eptype == EHCI_TFR_EP_BULK) {
 
-		kprintf("ehcicontrol: bulk transfer..\n");
+		//kprintf("ehcicontrol: bulk transfer..\n");
 		qtd1->next = 0x1;
 		qtd1->altnext = 0x1;
 		qtd1->pid = tfrptr->dirin ? EHCI_QTD_PID_IN :
@@ -163,7 +163,7 @@ status	ehcitransfer (
 
 	ehciasync_add(ehciptr, qhd);
 
-	retval = receive();
+	retval = recvtime(EHCI_TRANSFER_TIMEOUT);
 
 	freemem((char *)qhd, 32 + sizeof(*qhd));
 	freemem((char *)qtd1, 32 + sizeof(*qtd1));
@@ -176,11 +176,7 @@ status	ehcitransfer (
 		freemem((char *)qtd3, 32 + sizeof(*qtd3));
 	}
 
-	if(retval == SYSERR) {
-		return SYSERR;
-	}
-
-	return OK;
+	return retval;
 }
 
 /*------------------------------------------------------------------------

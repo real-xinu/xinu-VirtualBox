@@ -19,6 +19,8 @@ devcall	ehciinit (
 
 	ehciptr = (struct ehcicblk *)&ehcitab[devptr->dvminor];
 
+	ehciptr->devid = devptr->dvnum;
+
 	ehciptr->pcidev = find_pci_device(0x24CD, 0x8086, 0);
 
 	if(ehciptr->pcidev == SYSERR) {
@@ -43,7 +45,9 @@ devcall	ehciinit (
 
 	/* Disable all interrupts for now */
 
-	ehciptr->opptr->usbintr = EHCI_USBINTR_IE | EHCI_USBINTR_IAAE | 0x2;
+	ehciptr->opptr->usbintr = EHCI_USBINTR_IE |
+				  EHCI_USBINTR_IAAE |
+				  EHCI_USBINTR_EIE;
 
 	/* Allocate memory for periodic list */
 

@@ -109,6 +109,7 @@ local process	startup(void)
 	uint32	ipaddr;			/* Computer's IP address	*/
 	char	str[128];		/* String used to format output	*/
 
+	usb_init();
 
 	/* Use DHCP to obtain an IP address and format it */
 #if 0

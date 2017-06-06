@@ -56,16 +56,16 @@ usb:
 
 usbd:
 	on usb
-		-i ionull	-o ioerr	-c ioerr
+		-i usbdinit	-o ioerr	-c ioerr
 		-r ioerr	-g ioerr	-p ioerr
 		-w ioerr	-s ioerr	-n ioerr
 		-intr ioerr
 
 usbep:
 	on usbd
-		-i usbepinit	-o ioerr	-c ioerr
-		-r usbepread	-g ioerr	-p ioerr
-		-w usbepwrite	-s ioerr	-n ioerr
+		-i ionull	-o ioerr	-c ioerr
+		-r ionull	-g ioerr	-p ioerr
+		-w ionull	-s ioerr	-n ioerr
 		-intr ioerr
 
 /* type of a remote disk system device */
@@ -143,7 +143,8 @@ nam:
    USB is usb on ehci csr 0 -irq 0
 
    USBD0 is usbd on usb
-
+   USBD1 is usbd on usb
+/*
    USBEP0 is usbep on usbd
    USBEP1 is usbep on usbd
    USBEP2 is usbep on usbd
@@ -160,7 +161,7 @@ nam:
    USBEP13 is usbep on usbd
    USBEP14 is usbep on usbd
    USBEP15 is usbep on usbd
-
+*/
    /* Define a namespace device */
    NAMESPACE is nam on top
 
@@ -210,6 +211,9 @@ nam:
 #define	IRQ_TIMER    IRQ_HW5	/* timer IRQ is wired to hardware 5	*/
 #define	IRQ_ATH_MISC IRQ_HW4	/* Misc. IRQ is wired to hardware 4	*/
 #define CLKFREQ      200000000	/* 200 MHz clock			*/
+#define	NUSBD		2
+#define	NEHCI		1
+#define	NUSBEP		16
 
 #define	LF_DISK_DEV	RAM0
 

@@ -2,6 +2,8 @@
 
 #include <xinu.h>
 
+struct	usbepcblk usbeptab[NUSBEP];
+
 /*------------------------------------------------------------------------
  * usbcontrol  -  Control functions for device "USB"
  *------------------------------------------------------------------------
@@ -77,7 +79,7 @@ int32	usb_get_dev_desc (
 	dvrq->index = 0;
 	dvrq->length = sizeof(struct usb_devdesc);
 
-	utfr.usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+	utfr.usbdptr = &usbdtab[devtab[devid].dvminor];
 	utfr.eptype = USB_TFR_EP_CTRL;
 	utfr.ep = 0;
 	utfr.dirin = TRUE;
@@ -106,7 +108,7 @@ status	usb_set_address (
 	struct	usb_devreq *dvrq;	/* USB device request		*/
 	static	uint16 nextaddr = 1;	/* Next address to be assigned	*/
 
-	usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+	usbdptr = &usbdtab[devtab[devid].dvminor];
 
 	if(usbdptr->state > USBD_STATE_DFLT) {
 		return SYSERR;
@@ -154,7 +156,7 @@ int32	usb_get_cfg_desc (
 	struct	usb_devreq *dvrq;	/* USB device request		*/
 	struct	usbdcblk *usbdptr;	/* USB device control block	*/
 
-	usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+	usbdptr = &usbdtab[devtab[devid].dvminor];
 
 	dvrq = (struct usb_devreq *)getmem(sizeof(*dvrq));
 
@@ -198,7 +200,7 @@ status	usb_set_cfg (
 	byte	*ptr;			/* Byte pointer			*/
 	int32	i, j;			/* Index variables		*/
 
-	usbdptr = (struct usbdcblk *)devtab[devid].dvcsr;
+	usbdptr = &usbdtab[devtab[devid].dvminor];
 
 	if(usbdptr->state != USBD_STATE_ADDR) {
 		return SYSERR;

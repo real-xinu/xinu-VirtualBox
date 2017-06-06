@@ -109,13 +109,16 @@ struct	usbep {
 
 #define	USBD_HCI_EHCI		0
 
-#define	USBD_STATE_DFLT		0
-#define	USBD_STATE_ADDR		1
-#define	USBD_STATE_CFG		2
+#define	USBD_STATE_FREE		0
+#define	USBD_STATE_PWRD		1
+#define	USBD_STATE_DFLT		2
+#define	USBD_STATE_ADDR		3
+#define	USBD_STATE_CFG		4
 
-#define	NUSBD			1
+//#define	NUSBD			1
 
 struct	usbdcblk {
+	did32	devid;			/* Index in device table*/
 	byte	hcitype;		/* Host controller type	*/
 	did32	hcidev;			/* Host contr. device	*/
 	byte	address;		/* Device address	*/
@@ -128,7 +131,7 @@ struct	usbdcblk {
 
 extern	struct usbdcblk usbdtab[NUSBD];
 
-#define	NUSBEP	(NUSBD * MAX_USBD_EP)
+//#define	NUSBEP	(NUSBD * MAX_USBD_EP)
 extern	struct	usbepcblk usbeptab[NUSBEP];
 
 #define	USB_CTRL_TRANSFER	0
