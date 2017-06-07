@@ -136,9 +136,9 @@ nam:
    NULLDEV is null on nothing
 
    /* Physical Ethernet (raw packet transfer) */
-   ETHER0 is eth   on e1000e csr 0 -irq 0 */
+   ETHER0 is eth   on e1000e csr 0 -irq 0
 
-   EHCI is ehci on ehci csr 0 -irq 0 */
+   EHCI is ehci on ehci csr 0 -irq 0
 
    USB is usb on ehci csr 0 -irq 0
 

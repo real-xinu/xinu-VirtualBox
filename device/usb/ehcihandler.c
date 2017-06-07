@@ -17,7 +17,7 @@ interrupt ehcihandler (void) {
 
 	ehciptr = &ehcitab[0];
 
-	//kprintf("EHCI interrupt: %08x\n", ehciptr->opptr->usbsts);
+	kprintf("EHCI interrupt: %08x\n", ehciptr->opptr->usbsts);
 
 	status = ehciptr->opptr->usbsts;
 
@@ -85,4 +85,6 @@ interrupt ehcihandler (void) {
 			send(ehciptr->freeq[i]->_pid, OK);
 		}
 	}
+
+	ehciptr->opptr->usbsts |= 0x1F;
 }

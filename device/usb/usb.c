@@ -55,10 +55,13 @@ void	usb_new_device (
 		  return;
 	}
 
+	sleepms(50);
+
 	desclen = sizeof(struct usb_devdesc);
 	usbdptr->devdesc = (struct usb_devdesc *)getmem(desclen);
 	usb_get_dev_desc(usbdptr->devid, (char *)usbdptr->devdesc, desclen);
 
 	usb_set_address(usbdptr->devid);
 	kprintf("usb_new_device: address set to %d\n", usbdptr->address);
+
 }

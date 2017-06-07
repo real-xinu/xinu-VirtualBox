@@ -300,5 +300,7 @@ status	usb_set_cfg (
 	}
 	usbdptr->nep = j;
 
+	freemem((char *)dvrq, sizeof(*dvrq));
+
 	return OK;
 }

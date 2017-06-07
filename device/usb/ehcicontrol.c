@@ -62,10 +62,6 @@ status	ehcitransfer (
 	qtd1 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
 	qtd1->_start = tmp;
 
-	tmp = getmem(32 + sizeof(*qtd2));
-	qtd2 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
-	qtd2->_start = tmp;
-
 	/* Initialize the queue head */
 
 	memset(qhd, 0, sizeof(*qhd));
@@ -83,6 +79,10 @@ status	ehcitransfer (
 	qtd2 = qtd3 = NULL;
 
 	if(tfrptr->eptype == EHCI_TFR_EP_CTRL) {
+
+		tmp = getmem(32 + sizeof(*qtd2));
+		qtd2 = (struct ehci_qtd *)(((uint32)tmp + 31) & (~31));
+		qtd2->_start = tmp;
 
 		qtd1->next = (uint32)qtd2;
 		qtd1->pid = EHCI_QTD_PID_SETUP;
@@ -168,15 +168,18 @@ status	ehcitransfer (
 
 	retval = recvtime(EHCI_TRANSFER_TIMEOUT);
 
-	freemem((char *)qhd, 32 + sizeof(*qhd));
-	freemem((char *)qtd1, 32 + sizeof(*qtd1));
+	kprintf("ehcitransfer: qtd1 status %x\n", qtd1->status);
+	kprintf("ehcitransfer: qtd2 status %x\n", qtd2->status);
+
+	freemem((char *)qhd->_start, 32 + sizeof(*qhd));
+	freemem((char *)qtd1->_start, 32 + sizeof(*qtd1));
 
 	if(qtd2) {
-		freemem((char *)qtd2, 32 + sizeof(*qtd2));
+		freemem((char *)qtd2->_start, 32 + sizeof(*qtd2));
 	}
 
 	if(qtd3) {
-		freemem((char *)qtd3, 32 + sizeof(*qtd3));
+		freemem((char *)qtd3->_start, 32 + sizeof(*qtd3));
 	}
 
 	return retval;

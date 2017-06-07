@@ -612,7 +612,7 @@ extern	void	usb_new_device(byte, did32, int32);
 /* in file usbcontrol.c */
 extern	devcall	usbcontrol(struct dentry *, int32, int32, int32);
 extern	int32	usb_get_dev_desc(did32, char *, int32);
-extern	int32	usb_get_cfg_desc(did32, char *, int32);
+extern	int32	usb_get_cfg_desc(did32, int32, char *, int32);
 extern	status	usb_set_address(did32);
 extern	status	usb_set_cfg(did32, int32);
 

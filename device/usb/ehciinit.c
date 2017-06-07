@@ -21,11 +21,17 @@ devcall	ehciinit (
 
 	ehciptr->devid = devptr->dvnum;
 
-	ehciptr->pcidev = find_pci_device(0x24CD, 0x8086, 0);
+	ehciptr->pcidev = find_pci_device(0x265c, 0x8086, 0);
 
 	if(ehciptr->pcidev == SYSERR) {
 		return SYSERR;
 	}
+
+	/* Set the EHCI device as PCI bus master */
+
+	value = 0;
+	pci_bios_read_config_word(ehciptr->pcidev, 0x04, (uint16 *)&value);
+	pci_bios_write_config_word(ehciptr->pcidev, 0x04, value | 0x0006);
 
 	kprintf("Found EHCI controller\n");
 	pci_bios_read_config_dword(ehciptr->pcidev, 0x10, &value);

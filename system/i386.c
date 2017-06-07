@@ -45,6 +45,7 @@ void	setsegs()
 	uint32		np, npages;
 
 	npages = 4096;		/* 16 Meg for now */
+	npages = 0xffffffff/4096;
 	maxheap = (char *)(npages * NBPG - 1);
 
 	psd = &gdt_copy[1];	/* kernel code segment */
@@ -65,6 +66,8 @@ void	setsegs()
 	psd->sd_hilimit = npages >> 16;
 
 	memcpy(gdt, gdt_copy, sizeof(gdt_copy));
+
+	npages = 4096;
 	initsp = npages*NBPG  - 4;
 }
 
