@@ -61,7 +61,7 @@ devcall	ehciinit (
 	value = 0;
 	pci_bios_read_config_byte(ehciptr->pcidev, 0x3C, (byte *)&value);
 
-	set_evec(IRQBASE + value, ehcidispatch);
+	set_evec(IRQBASE + value, (uint32)ehcidispatch);
 
 	/* Start the EHCI controller */
 

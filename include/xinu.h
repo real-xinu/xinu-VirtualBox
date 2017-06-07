@@ -28,6 +28,8 @@
 #include <dhcp.h>
 #include <icmp.h>
 #include <tftp.h>
+#include <ehci.h>
+#include <usb.h>
 #include <name.h>
 #include <shell.h>
 #include <date.h>
@@ -41,5 +43,3 @@
 #include <multiboot.h>
 #include <stdio.h>
 #include <string.h>
-#include <ehci.h>
-#include <usb.h>

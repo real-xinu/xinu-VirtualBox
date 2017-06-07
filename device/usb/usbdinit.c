@@ -17,4 +17,6 @@ devcall	usbdinit (
 	memset(usbdptr, 0, sizeof(*usbdptr));
 	usbdptr->devid = devptr->dvnum;
 	usbdptr->state = USBD_STATE_FREE;
+
+	return OK;
 }

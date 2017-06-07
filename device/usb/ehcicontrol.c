@@ -2,6 +2,9 @@
 
 #include <xinu.h>
 
+static	status	ehcitransfer(struct ehcicblk *, struct ehcitransfer *);
+static	status	ehciasync_add(struct ehcicblk *, struct ehci_qhd *);
+
 /*------------------------------------------------------------------------
  * ehcicontrol  -  Control functions for EHCI device
  *------------------------------------------------------------------------

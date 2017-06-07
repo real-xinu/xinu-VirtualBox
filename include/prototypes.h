@@ -74,6 +74,10 @@ extern int console_init(void);
 /* in file early_imr.c */
 extern int remove_irm_protections(void);
 
+/* in file ehci.c */
+extern	void	ehci_scan(void);
+extern	void	ehci_port_reset(struct ehcicblk *, int32);
+
 /* in file ehcicontrol.c */
 extern	devcall ehcicontrol(struct dentry *, int32, int32, int32);
 
@@ -601,8 +605,16 @@ extern	void	udp_hton(struct netpacket *);
 /* in file unsleep.c */
 extern	syscall	unsleep(pid32);
 
+/* in file usb.c */
+extern	void	usb_init(void);
+extern	void	usb_new_device(byte, did32, int32);
+
 /* in file usbcontrol.c */
 extern	devcall	usbcontrol(struct dentry *, int32, int32, int32);
+extern	int32	usb_get_dev_desc(did32, char *, int32);
+extern	int32	usb_get_cfg_desc(did32, char *, int32);
+extern	status	usb_set_address(did32);
+extern	status	usb_set_cfg(did32, int32);
 
 /* in file usbdinit.c */
 extern	devcall	usbdinit(struct dentry *);
