@@ -178,6 +178,7 @@ static	void	sysinit()
 	/* Create a ready list for processes */
 
 	readylist = newqueue();
+	readylock = newlock();
 
 
 	/* initialize the PCI bus */

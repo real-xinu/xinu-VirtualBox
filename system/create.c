@@ -25,13 +25,21 @@ pid32	create(
 	uint32		*a;		/* Points to list of args	*/
 	uint32		*saddr;		/* Stack address		*/
 
-	mask = disable();
-	if (ssize < MINSTK)
-		ssize = MINSTK;
+	if(priority < 1){return SYSERR;}
+
+	if (ssize < MINSTK){ssize = MINSTK;}
 	ssize = (uint32) roundmb(ssize);
-	if ( (priority < 1) || ((pid=newpid()) == SYSERR) ||
-	     ((saddr = (uint32 *)getstk(ssize)) == (uint32 *)SYSERR) ) {
-		restore(mask);
+
+	if((saddr = (uint32*)getstk(ssize)) == (uint32*)SYSERR){
+		return SYSERR;
+	}
+
+	mask = xsec_beg(proctablock);
+
+	/* newpid() locks the new process if successful */
+	if((pid=newpid()) == SYSERR){
+		freestk(saddr, ssize);
+		xsec_end(mask, proctablock);
 		return SYSERR;
 	}
 
@@ -40,6 +48,7 @@ pid32	create(
 
 	/* Initialize process table entry for new process */
 	prptr->prstate = PR_SUSP;	/* Initial state is suspended	*/
+	prptr->prcpu = CPU_NONE;
 	prptr->prprio = priority;
 	prptr->prstkbase = (char *)saddr;
 	prptr->prstklen = ssize;
@@ -93,29 +102,35 @@ pid32	create(
 	*--saddr = 0;			/* %esi */
 	*--saddr = 0;			/* %edi */
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
-	restore(mask);
+
+	unlock(prptr->prlock);	/* locked in newpid	*/
+	xsec_end(mask, proctablock);
 	return pid;
 }
 
 /*------------------------------------------------------------------------
- *  newpid  -  Obtain a new (free) process ID
+ *  newpid  -  Obtain a new (free) process ID and lock the new process
  *------------------------------------------------------------------------
  */
 local	pid32	newpid(void)
 {
-	uint32	i;			/* Iterate through all processes*/
-	static	pid32 nextpid = 1;	/* Position in table to try or	*/
-					/*   one beyond end of table	*/
+	uint32	i;			/* iterate through all processes*/
+	static	pid32 nextpid = NCPU;	/* position in table to try or	*/
+					/*  one beyond end of table	*/
+	pid32	pid;
 
-	/* Check all NPROC slots */
+	/* check all NPROC slots */
 
 	for (i = 0; i < NPROC; i++) {
-		nextpid %= NPROC;	/* Wrap around to beginning */
-		if (proctab[nextpid].prstate == PR_FREE) {
-			return nextpid++;
+		pid = nextpid++;
+		nextpid %= NPROC;	/* wrap around to beginning */
+		lock(proctab[pid].prlock);
+		if (proctab[pid].prstate == PR_FREE) {
+			return pid;
 		} else {
-			nextpid++;
+			unlock(proctab[nextpid].prlock);
 		}
 	}
+
 	return (pid32) SYSERR;
 }

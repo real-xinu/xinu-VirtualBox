@@ -29,3 +29,6 @@ extern	struct	cpuent 	cputab[];
 #define CPU_ALL		-2
 
 #define isbadcid(x)	(x < 0 || x >= NCPU)
+
+#define IPI_RESCHED 51	/* inter-processor interrupt to cause resched */
+#define IPI_SUSPEND 52  /* inter-processor interrupt to cause suspend */

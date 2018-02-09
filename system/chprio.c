@@ -15,14 +15,22 @@ pri16	chprio(
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	pri16	oldprio;		/* Priority to return		*/
 
-	mask = disable();
 	if (isbadpid(pid)) {
-		restore(mask);
 		return (pri16) SYSERR;
 	}
 	prptr = &proctab[pid];
+
+	mask = xsec_beg(prptr->prlock);
+
+	if(prptr->prstate == PR_FREE || prptr->prstate == PR_DEAD){
+		xsec_end(mask, prptr->prlock);
+		return SYSERR;
+	}
+
 	oldprio = prptr->prprio;
 	prptr->prprio = newprio;
-	restore(mask);
+
+	xsec_end(mask, prptr->prlock);
+	
 	return oldprio;
 }

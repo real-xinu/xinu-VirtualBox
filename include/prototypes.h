@@ -48,6 +48,8 @@ extern	syscall	control(did32, int32, int32, int32);
 extern	void	cpu_run(int32, void (*)(void));
 extern	void	cpuinit(void);
 extern	cid32	getcid(void);
+extern	status	sendipi(int32 sgi, cid32 core);
+extern	status	bcastipi(int32 sgi);
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
@@ -193,6 +195,10 @@ extern	void	ip_ntoh(struct netpacket *);
 extern	void	ip_hton(struct netpacket *);
 extern	process	ipout(void);
 extern	status	ip_enqueue(struct netpacket *);
+
+/* in file ipidisp.S */
+extern	void	resched_disp(void);
+extern	void	suspend_disp(void);
 
 /* in file net.c */
 extern	void	net_init(void);

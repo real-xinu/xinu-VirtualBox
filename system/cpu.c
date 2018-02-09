@@ -32,7 +32,6 @@ void	cpu_start2();
 void	cpu_start2_end();
 extern	struct	idt idt[];
 
-
 /*------------------------------------------------------------------------
  *  cpuinit  -  Initialize cpu entry information
  *------------------------------------------------------------------------
@@ -40,6 +39,10 @@ extern	struct	idt idt[];
 void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
+
+	/* set resched and suspend ipi handlers */
+	set_evec(IPI_RESCHED, (uint32)resched_disp);
+	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
 
 	for(i = 0; i < NCPU; i++){
 		cpuptr = &cputab[i];
@@ -218,10 +221,117 @@ asm (
 	"iret\n\t"
 );
 
+// /*------------------------------------------------------------------------
+//  * resched_disp  -  Interrupt dispatcher for resched interrupts 
+//  *------------------------------------------------------------------------
+//  */
+// asm (
+// 	"#include <icu.s>\n\t"
+// 	".text\n\t"
+// 	".globl	resched_disp		# resched interrupt dispatcher\n\t"
+// 	"resched_disp:\n\t"
+// 	"pushal			# Save registers\n\t"
+// 	"cli			# Disable further interrupts\n\t"
+// 	"movb	$EOI,%al	# Reset interrupt\n\t"
+// 	"outb	%al,$OCW1_2\n\t"
+
+// 	"call	resched	# Call high level handler\n\t"
+
+// 	"sti			# Restore interrupt status\n\t"
+// 	"popal			# Restore registers\n\t"
+// 	"iret			# Return from interrupt\n\t"
+// );
+
+// /*------------------------------------------------------------------------
+//  * suspend_disp	 -  Interrupt dispatcher for suspend interrupts 
+//  *------------------------------------------------------------------------
+//  */
+// asm (
+// 	"#include <icu.s>\n\t"
+// 	".text\n\t"
+// 	".globl	suspend_disp		# resched interrupt dispatcher\n\t"
+// 	"suspend_disp:\n\t"
+// 	"pushal			# Save registers\n\t"
+// 	"cli			# Disable further interrupts\n\t"
+// 	"movb	$EOI,%al	# Reset interrupt\n\t"
+// 	"outb	%al,$OCW1_2\n\t"
+
+// 	"call	suspend	# Call high level handler\n\t"
+
+// 	"sti			# Restore interrupt status\n\t"
+// 	"popal			# Restore registers\n\t"
+// 	"iret			# Return from interrupt\n\t"
+// );
+
 /*------------------------------------------------------------------------
  *  getcid  -  Return the ID of the currently executing core
  *------------------------------------------------------------------------
  */
 cid32 getcid(void){
 	return (lapic->lapic_id >> 24);
+}
+
+/*------------------------------------------------------------------------
+ * set_irq_target - set gic distributor to forward irq to target cpu
+ *------------------------------------------------------------------------
+ */ // TODO:
+// status set_irq_target(uint32 xnum, cid32 cpu)
+// {
+// 	struct gic_distreg* gicdist = (struct gic_distreg*)GIC_DIST_BASE;
+// 	int32 pctgt = 0;	/* target mask */
+// 	int32 i;		/* iterator over target mask */
+
+// 	if(xnum > GIC_IRQ_MAX) {
+// 		return SYSERR;
+// 	}
+
+// 	if(cpu == CPU_ALL){	/* forward irq to all cores */
+// 		for (i = 0; i < NCPU; i++){
+// 			pctgt |= (1 << i);
+// 		}
+// 	} else if (isbadcid(cpu)) {
+// 		return SYSERR;
+// 	} else {
+// 		pctgt = (1 << cpu);
+// 	}
+
+// 	gicdist->pctgt[xnum] = pctgt;
+
+// 	return OK;
+// }
+
+/*------------------------------------------------------------------------
+ *  sendsgi  -  Generate inter-processor interrupt on given core
+ *------------------------------------------------------------------------
+ */
+status sendipi(
+    int32 ipi,	/* interrupt number to generate */
+    cid32 core	/* core on which to generate interrupt */
+    )
+{
+	
+	/* Send an interrupt (50) to the target processor */
+	lapic->icr_high = (core << 24) & 0xFF000000;
+	lapic->icr_low = 0x00004000 & ipi;
+
+    return OK;
+}
+
+/*------------------------------------------------------------------------
+ *  bcastsgi  -  broadcast inter-processor interrupt on all cores 
+ * 					 except caller
+ *------------------------------------------------------------------------
+ */
+status bcastipi(
+    int32 ipi	/* interrupt number to generate */
+    )
+{
+	cid32 core;
+	cid32 thiscore = getcid();
+	for(core = 0; core < NCPU; core++){
+		if(core != thiscore){
+			sendipi(ipi, core);
+		}
+	}
+	return OK;
 }
