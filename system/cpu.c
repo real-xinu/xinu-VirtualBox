@@ -221,48 +221,6 @@ asm (
 	"iret\n\t"
 );
 
-// /*------------------------------------------------------------------------
-//  * resched_disp  -  Interrupt dispatcher for resched interrupts 
-//  *------------------------------------------------------------------------
-//  */
-// asm (
-// 	"#include <icu.s>\n\t"
-// 	".text\n\t"
-// 	".globl	resched_disp		# resched interrupt dispatcher\n\t"
-// 	"resched_disp:\n\t"
-// 	"pushal			# Save registers\n\t"
-// 	"cli			# Disable further interrupts\n\t"
-// 	"movb	$EOI,%al	# Reset interrupt\n\t"
-// 	"outb	%al,$OCW1_2\n\t"
-
-// 	"call	resched	# Call high level handler\n\t"
-
-// 	"sti			# Restore interrupt status\n\t"
-// 	"popal			# Restore registers\n\t"
-// 	"iret			# Return from interrupt\n\t"
-// );
-
-// /*------------------------------------------------------------------------
-//  * suspend_disp	 -  Interrupt dispatcher for suspend interrupts 
-//  *------------------------------------------------------------------------
-//  */
-// asm (
-// 	"#include <icu.s>\n\t"
-// 	".text\n\t"
-// 	".globl	suspend_disp		# resched interrupt dispatcher\n\t"
-// 	"suspend_disp:\n\t"
-// 	"pushal			# Save registers\n\t"
-// 	"cli			# Disable further interrupts\n\t"
-// 	"movb	$EOI,%al	# Reset interrupt\n\t"
-// 	"outb	%al,$OCW1_2\n\t"
-
-// 	"call	suspend	# Call high level handler\n\t"
-
-// 	"sti			# Restore interrupt status\n\t"
-// 	"popal			# Restore registers\n\t"
-// 	"iret			# Return from interrupt\n\t"
-// );
-
 /*------------------------------------------------------------------------
  *  getcid  -  Return the ID of the currently executing core
  *------------------------------------------------------------------------

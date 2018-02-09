@@ -12,16 +12,15 @@
  *------------------------------------------------------------------------
  */
 resched_disp:
-	pushal			# Save registers
-	cli			# Disable further interrupts
-	movb	$EOI,%al	# Reset interrupt
-	outb	%al,$OCW1_2
-
-	call	resched	# Call high level handler
-
-	sti			# Restore interrupt status
-	popal			# Restore registers
-	iret			# Return from interrupt
+		pushal			/* Save general-purpose regs.	*/
+		pushfl			/* Save the flags register	*/
+		cli			/* Prevent further interrupts	*/
+		movb	$EOI,%al	/* Clear the interrupt		*/
+		outb	%al,$OCW1_2
+		call	resched	/* Call the handler		*/
+		popfl			/* Restore the flags register	*/
+		popal			/* Restore general-purpose regs.*/
+		iret			/* Return from interrupt	*/
 
 
 /*------------------------------------------------------------------------
@@ -29,13 +28,12 @@ resched_disp:
  *------------------------------------------------------------------------
  */
 suspend_disp:
-	pushal			# Save registers
-	cli			# Disable further interrupts
-	movb	$EOI,%al	# Reset interrupt
-	outb	%al,$OCW1_2
-
-	call	suspend	# Call high level handler
-
-	sti			# Restore interrupt status
-	popal			# Restore registers
-	iret			# Return from interrupt
+		pushal			/* Save general-purpose regs.	*/
+		pushfl			/* Save the flags register	*/
+		cli			/* Prevent further interrupts	*/
+		movb	$EOI,%al	/* Clear the interrupt		*/
+		outb	%al,$OCW1_2
+		call	suspend	/* Call the handler		*/
+		popfl			/* Restore the flags register	*/
+		popal			/* Restore general-purpose regs.*/
+		iret			/* Return from interrupt	*/
