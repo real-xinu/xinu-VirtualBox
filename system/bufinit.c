@@ -3,6 +3,7 @@
 #include <xinu.h>
 
 struct	bpentry	buftab[NBPOOLS];		/* Buffer pool table	*/
+lid32 buftablock;
 bpid32	nbpools;
 
 /*------------------------------------------------------------------------
@@ -12,5 +13,6 @@ bpid32	nbpools;
 status	bufinit(void)
 {
 	nbpools = 0;
+	buftablock = newlock();
 	return OK;
 }

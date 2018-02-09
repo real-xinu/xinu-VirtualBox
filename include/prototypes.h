@@ -46,6 +46,8 @@ extern	syscall	control(did32, int32, int32, int32);
 
 /* in file cpu.c */
 extern	void	cpu_run(int32, void (*)(void));
+extern	void	cpuinit(void);
+extern	cid32	getcid(void);
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
@@ -273,6 +275,11 @@ extern	status	lfsetup(struct lflcblk *);
 /* in file lftruncate.c */
 extern	status	lftruncate(struct lflcblk *);
 
+/* in file lock.c */
+extern	status	lock(lid32);
+extern	status	unlock(lid32);
+extern	lid32	newlock(void);
+
 /* in file lpgetc.c */
 extern	devcall	lpgetc(struct dentry *);
 
@@ -344,6 +351,12 @@ extern	void	pdumph(struct netpacket *);
 
 /* in file platinit.c */
 extern	void	platinit(void);
+
+/* in file prnull.c */
+extern	void	prnull(void);
+
+/* in file procinit.c */
+extern	status	procinit(void);
 
 /* in file ptclear.c */
 extern	void	_ptclear(struct ptentry *, uint16, int32 (*)(int32));
@@ -440,6 +453,10 @@ extern	devcall	sdmcwrite(struct dentry *, char *, int32);
 /* in file sdmcdispatch.S */
 extern	interrupt	sdmcdispatch(void);
 
+/* in file spinlock.c */
+extern void spin_lock(volatile int*);
+extern void spin_unlock(volatile int*);
+
 /* in file read.c */
 extern	syscall	read(did32, char *, uint32);
 
@@ -515,6 +532,9 @@ extern	sid32	semcreate(int32);
 
 /* in file semdelete.c */
 extern	syscall	semdelete(sid32);
+
+/* in file seminit.c */
+extern	status	seminit(void);
 
 /* in file semreset.c */
 extern	syscall	semreset(sid32, int32);
@@ -613,6 +633,12 @@ extern	syscall	write(did32, char *, uint32);
 
 /* in file xdone.c */
 extern	void	xdone(void);
+
+/* in file xsec.c */
+extern	intmask	xsec_beg(lid32);
+extern	status	xsec_end(intmask, lid32);
+extern	intmask	xsec_begn(uint32, ...);
+extern	status	xsec_endn(intmask, uint32, ...);
 
 /* in file yield.c */
 extern	syscall	yield(void);

@@ -2,33 +2,7 @@
 
 #include <xinu.h>
 
-void	cpufunc1 (void) {
-
-	kprintf("Message 1 on processor: %d\n", lapic->lapic_id >> 24);
-}
-
-void	cpufunc2 (void) {
-
-	kprintf("Message 2 on processor: %d\n", lapic->lapic_id >> 24);
-}
-
-process	main(void)
-{
-	cpu_run(1, cpufunc1);
-
-	sleep(2);
-
-	cpu_run(2, cpufunc1);
-
-	sleep(2);
-
-	cpu_run(1, cpufunc2);
-
-	sleep(2);
-
-	cpu_run(2, cpufunc2);
-
-	sleep(1000);
+process	main(void){
 
 	/* Run the Xinu shell */
 

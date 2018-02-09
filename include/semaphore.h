@@ -15,8 +15,10 @@ struct	sentry	{
 	int32	scount;		/* Count for the semaphore		*/
 	qid16	squeue;		/* Queue of processes that are waiting	*/
 				/*     on the semaphore			*/
+	lid32	slock;		/* Lock count and wait queue */
 };
 
 extern	struct	sentry semtab[];
+extern	lid32	semtablock;
 
 #define	isbadsem(s)	((int32)(s) < 0 || (s) >= NSEM)

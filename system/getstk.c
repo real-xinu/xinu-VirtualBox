@@ -14,11 +14,11 @@ char  	*getstk(
 	struct	memblk	*prev, *curr;	/* Walk through memory list	*/
 	struct	memblk	*fits, *fitsprev; /* Record block that fits	*/
 
-	mask = disable();
 	if (nbytes == 0) {
-		restore(mask);
 		return (char *)SYSERR;
 	}
+
+	mask = xsec_beg(memlock);
 
 	nbytes = (uint32) roundmb(nbytes);	/* Use mblock multiples	*/
 
@@ -37,9 +37,10 @@ char  	*getstk(
 	}
 
 	if (fits == NULL) {			/* No block was found	*/
-		restore(mask);
+		xsec_end(mask, memlock);
 		return (char *)SYSERR;
 	}
+
 	if (nbytes == fits->mlength) {		/* Block is exact match	*/
 		fitsprev->mnext = fits->mnext;
 	} else {				/* Remove top section	*/
@@ -47,6 +48,7 @@ char  	*getstk(
 		fits = (struct memblk *)((uint32)fits + fits->mlength);
 	}
 	memlist.mlength -= nbytes;
-	restore(mask);
+
+	xsec_end(mask, memlock);
 	return (char *)((uint32) fits + nbytes - sizeof(uint32));
 }

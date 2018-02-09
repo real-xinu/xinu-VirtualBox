@@ -32,6 +32,38 @@ void	cpu_start2();
 void	cpu_start2_end();
 extern	struct	idt idt[];
 
+
+/*------------------------------------------------------------------------
+ *  cpuinit  -  Initialize cpu entry information
+ *------------------------------------------------------------------------
+ */
+void cpuinit(void){
+	int32 i;				/* iterator over cores */
+	struct cpuent* cpuptr;	/* pointer to cpu entry */
+
+	for(i = 0; i < NCPU; i++){
+		cpuptr = &cputab[i];
+
+		/* Scheduling is not currently blocked */
+		cpuptr->defer.ndefers = 0;
+		cpuptr->defer.attempt = FALSE;
+
+		/* Initialize current and previous processes */
+		cpuptr->cpid = i;
+		cpuptr->ppid = i;
+
+		/* Set initial preemption time */
+		cpuptr->preempt = 1000;
+
+		/* Set auxiliary cores running null process */
+		if (i > 0) {
+			cpu_run(i, prnull);
+		}
+	}
+}
+
+
+
 /*------------------------------------------------------------------------
  * cpu_run  -  Execute a function on the specified CPU
  *------------------------------------------------------------------------
@@ -185,3 +217,11 @@ asm (
 	"call cpuhandler\n\t"
 	"iret\n\t"
 );
+
+/*------------------------------------------------------------------------
+ *  getcid  -  Return the ID of the currently executing core
+ *------------------------------------------------------------------------
+ */
+cid32 getcid(void){
+	return (lapic->lapic_id >> 24);
+}

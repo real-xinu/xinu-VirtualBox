@@ -27,6 +27,7 @@ struct	memblk	{			/* See roundmb & truncmb	*/
 extern	struct	memblk	memlist;	/* Head of free memory list	*/
 extern	void	*minheap;		/* Start of heap		*/
 extern	void	*maxheap;		/* Highest valid heap address	*/
+extern	lid32	memlock;		/* Lock on low level memory manager */
 
 
 /* Added by linker */

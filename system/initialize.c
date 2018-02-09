@@ -24,7 +24,6 @@ struct	memblk	memlist;	/* List of free memory blocks		*/
 /* Active system status */
 
 int	prcount;		/* Total number of live processes	*/
-pid32	currpid;		/* ID of currently executing process	*/
 
 /* Control sequence to reset the console colors and cusor positiion	*/
 
@@ -150,8 +149,6 @@ local process	startup(void)
 static	void	sysinit()
 {
 	int32	i;
-	struct	procent	*prptr;		/* Ptr to process table entry	*/
-	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
 	/* Reset the console */
 
@@ -166,45 +163,13 @@ static	void	sysinit()
 	
 	meminit();
 
-	/* Initialize system variables */
+	/* Initialize process variables */
 
-	/* Count the Null process as the first process in the system */
-
-	prcount = 1;
-
-	/* Scheduling is not currently blocked */
-
-	Defer.ndefers = 0;
-
-	/* Initialize process table entries free */
-
-	for (i = 0; i < NPROC; i++) {
-		prptr = &proctab[i];
-		prptr->prstate = PR_FREE;
-		prptr->prname[0] = NULLCH;
-		prptr->prstkbase = NULL;
-		prptr->prprio = 0;
-	}
-
-	/* Initialize the Null process entry */	
-
-	prptr = &proctab[NULLPROC];
-	prptr->prstate = PR_CURR;
-	prptr->prprio = 0;
-	strncpy(prptr->prname, "prnull", 7);
-	prptr->prstkbase = getstk(NULLSTK);
-	prptr->prstklen = NULLSTK;
-	prptr->prstkptr = 0;
-	currpid = NULLPROC;
+	procinit();
 	
 	/* Initialize semaphores */
 
-	for (i = 0; i < NSEM; i++) {
-		semptr = &semtab[i];
-		semptr->sstate = S_FREE;
-		semptr->scount = 0;
-		semptr->squeue = newqueue();
-	}
+	seminit();
 
 	/* Initialize buffer pools */
 
@@ -227,6 +192,9 @@ static	void	sysinit()
 		init(i);
 	}
 	return;
+
+	/* initialize and start up secondary cores */
+	cpuinit();
 }
 
 int32	stop(char *s)

@@ -1,9 +1,9 @@
-/* process.h - isbadpid */
+/* process.h - isbadpid, currpid */
 
 /* Maximum number of processes in the system */
 
 #ifndef NPROC
-#define	NPROC		8
+#define	NPROC		100
 #endif		
 
 /* Process state constants */
@@ -16,6 +16,7 @@
 #define	PR_SUSP		5	/* Process is suspended			*/
 #define	PR_WAIT		6	/* Process is on semaphore queue	*/
 #define	PR_RECTIM	7	/* Process is receiving with timeout	*/
+#define PR_DEAD		8	/* Process is dead	*/
 
 /* Miscellaneous process definitions */
 
@@ -28,11 +29,13 @@
 #define	INITPRIO	20	/* Initial process priority		*/
 #define	INITRET		userret	/* Address to which process returns	*/
 
-/* Inline code to check process ID (assumes interrupts are disabled)	*/
+/* Inline code to check process ID	*/
 
 #define	isbadpid(x)	( ((pid32)(x) < 0) || \
-			  ((pid32)(x) >= NPROC) || \
-			  (proctab[(x)].prstate == PR_FREE))
+			  ((pid32)(x) >= NPROC) )
+
+#define	isnullpid(x) ( ((pid32)(x) >= 0) && \
+			  ((pid32)(x) < NCPU) )
 
 /* Number of device descriptors a process can have open */
 
@@ -52,11 +55,17 @@ struct procent {		/* Entry in the process table		*/
 	umsg32	prmsg;		/* Message sent to this process		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
+	lid32	prlock;		/* Process spinlock */
+	cid32	prcpu;		/* core process is running on	*/
+	byte pad[2];		/* pad to multiple of 32 bits	*/
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
 #define	STACKMAGIC	0x0A0AAAA9
 
 extern	struct	procent proctab[];
-extern	int32	prcount;	/* Currently active processes		*/
-extern	pid32	currpid;	/* Currently executing process		*/
+extern	int32	prcount;		/* Currently active processes		*/
+extern	lid32	proctablock;	/* Lock on the process table and global process count		*/
+
+/* id of process currently executing on this core */
+#define	currpid		(cputab[getcid()].cpid)

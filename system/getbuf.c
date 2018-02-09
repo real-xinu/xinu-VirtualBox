@@ -14,20 +14,20 @@ char    *getbuf(
 	struct	bpentry	*bpptr;		/* Pointer to entry in buftab	*/
 	struct	bpentry	*bufptr;	/* Pointer to a buffer		*/
 
-	mask = disable();
-
 	/* Check arguments */
-
 	if ( (poolid < 0  ||  poolid >= nbpools) ) {
-		restore(mask);
 		return (char *)SYSERR;
-
 	}
 	bpptr = &buftab[poolid];
 
 	/* Wait for pool to have > 0 buffers and allocate a buffer */
 
-	wait(bpptr->bpsem);
+	if(wait(bpptr->bpsem) == SYSERR){
+		return (char *)SYSERR;
+	}
+
+	mask = xsec_beg(bpptr->bplock);
+
 	bufptr = bpptr->bpnext;
 
 	/* Unlink buffer from pool */
@@ -38,6 +38,7 @@ char    *getbuf(
 
 	*(bpid32 *)bufptr = poolid;
 	bufptr = (struct bpentry *)(sizeof(bpid32) + (char *)bufptr);
-	restore(mask);
+
+	xsec_end(mask, bpptr->bplock);
 	return (char *)bufptr;
 }

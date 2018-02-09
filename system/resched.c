@@ -2,8 +2,6 @@
 
 #include <xinu.h>
 
-struct	defer	Defer;
-
 /*------------------------------------------------------------------------
  *  resched  -  Reschedule processor to highest priority eligible process
  *------------------------------------------------------------------------

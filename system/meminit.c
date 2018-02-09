@@ -4,6 +4,7 @@
 
 void	*minheap;		/* Start of heap			*/
 void	*maxheap;		/* Highest valid heap address		*/
+lid32	memlock;		/* Lock on low level memory manager */
 
 /*------------------------------------------------------------------------
  * meminit - initialize memory bounds and the free memory list
@@ -12,6 +13,9 @@ void	*maxheap;		/* Highest valid heap address		*/
 void	meminit(void) {
 
        struct	memblk	*memptr;	/* Ptr to memory block		*/
+
+	   /* Initialize the low level memory manager spinlock */
+		memlock = newlock();
 
        /* Initialize the free memory list */
 

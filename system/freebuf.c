@@ -14,14 +14,12 @@ syscall	freebuf(
 	struct	bpentry	*bpptr;		/* Pointer to entry in buftab	*/
 	bpid32	poolid;			/* ID of buffer's pool		*/
 
-	mask = disable();
 
 	/* Extract pool ID from integer prior to buffer address */
 
 	bufaddr -= sizeof(bpid32);
 	poolid = *(bpid32 *)bufaddr;
 	if (poolid < 0  ||  poolid >= nbpools) {
-		restore(mask);
 		return SYSERR;
 	}
 
@@ -30,10 +28,14 @@ syscall	freebuf(
 	bpptr = &buftab[poolid];
 
 	/* Insert buffer into list and signal semaphore */
+	mask = xsec_beg(bpptr->bplock);
 
 	((struct bpentry *)bufaddr)->bpnext = bpptr->bpnext;
 	bpptr->bpnext = (struct bpentry *)bufaddr;
+
+	xsec_end(mask, bpptr->bplock);
+
 	signal(bpptr->bpsem);
-	restore(mask);
+
 	return OK;
 }

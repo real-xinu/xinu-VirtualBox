@@ -13,22 +13,21 @@ char  	*getmem(
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	memblk	*prev, *curr, *leftover;
 
-	mask = disable();
 	if (nbytes == 0) {
-		restore(mask);
 		return (char *)SYSERR;
 	}
 
 	nbytes = (uint32) roundmb(nbytes);	/* Use memblk multiples	*/
 
+	mask = xsec_beg(memlock);
+
 	prev = &memlist;
 	curr = memlist.mnext;
 	while (curr != NULL) {			/* Search free list	*/
-
 		if (curr->mlength == nbytes) {	/* Block is exact match	*/
 			prev->mnext = curr->mnext;
 			memlist.mlength -= nbytes;
-			restore(mask);
+			xsec_end(mask, memlock);
 			return (char *)(curr);
 
 		} else if (curr->mlength > nbytes) { /* Split big block	*/
@@ -38,13 +37,14 @@ char  	*getmem(
 			leftover->mnext = curr->mnext;
 			leftover->mlength = curr->mlength - nbytes;
 			memlist.mlength -= nbytes;
-			restore(mask);
+			xsec_end(mask, memlock);
 			return (char *)(curr);
 		} else {			/* Move to next block	*/
 			prev = curr;
 			curr = curr->mnext;
 		}
 	}
-	restore(mask);
+
+	xsec_end(mask, memlock);
 	return (char *)SYSERR;
 }
