@@ -12,14 +12,23 @@ umsg32	recvclr(void)
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	umsg32	msg;			/* Message to return		*/
 
-	mask = disable();
 	prptr = &proctab[currpid];
+
+	mask = xsec_beg(prptr->prlock);
+
+	/* Check for state changed by another processor */
+	if(prptr->prstate != PR_CURR){ 
+		xsec_end(mask, prptr->prlock);
+		return SYSERR;
+	}
+
 	if (prptr->prhasmsg == TRUE) {
 		msg = prptr->prmsg;	/* Retrieve message		*/
 		prptr->prhasmsg = FALSE;/* Reset message flag		*/
 	} else {
 		msg = OK;
 	}
-	restore(mask);
+	
+	xsec_end(mask, prptr->prlock);
 	return msg;
 }
