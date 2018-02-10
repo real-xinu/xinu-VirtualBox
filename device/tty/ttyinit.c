@@ -48,6 +48,7 @@ devcall	ttyinit(
 	typtr->tyocrlf = TRUE;			/* Send CRLF for NEWLINE*/
 	typtr->tyifullc = TY_FULLCH;		/* Send ^G when buffer	*/
 						/*   is full		*/
+	typtr->tylock = newlock();		/* Lock on tty control block */
 
 	/* Initialize the UART */
 

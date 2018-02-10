@@ -23,7 +23,11 @@ devcall	ttyread(
 	}
 	typtr= &ttytab[devptr->dvminor];
 
+	lock(typtr->tylock);
+
 	if (typtr->tyimode != TY_IMCOOKED) {
+		
+		unlock(typtr->tylock);
 
 		/* For count of zero, return all available characters */
 
@@ -40,9 +44,9 @@ devcall	ttyread(
 		}
 		return nread;
 	}
+	unlock(typtr->tylock);	/* in case ttygetc blocks */
 
 	/* Block until input arrives */
-
 	firstch = ttygetc(devptr);
 
 	/* Check for End-Of-File */

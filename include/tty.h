@@ -55,6 +55,7 @@ struct	ttycblk	{			/* Tty line control block	*/
 	char	tyostart;		/* Character that starts output	*/
 	bool8	tyocrlf;		/* Output CR/LF for LF ?	*/
 	char	tyifullc;		/* Char to send when input full	*/
+	lid32	tylock;			/* Lock on tty control block	*/
 };
 extern	struct	ttycblk	ttytab[];
 

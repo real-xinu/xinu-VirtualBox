@@ -20,9 +20,12 @@ void	ttyhandle_out(
 					/*   output FIFO		*/
 	byte 	ier = 0;
 
+	lock(typtr->tylock);	/* exclusive access to control block */
+
 	/* If output is currently held, simply ignore the call */
 
 	if (typtr->tyoheld) {
+		unlock(typtr->tylock);
 		return;
 	}
 
@@ -32,6 +35,7 @@ void	ttyhandle_out(
 	     (semcount(typtr->tyosem) >= TY_OBUFLEN) ) {
 		ier = io_inb(csrptr->ier);
 		io_outb(csrptr->ier,ier & ~UART_IER_ETBEI);
+		unlock(typtr->tylock);
 		return;
 	}
 	
@@ -67,5 +71,6 @@ void	ttyhandle_out(
 	if (ochars > 0) {
 		signaln(typtr->tyosem, ochars);
 	}
+	unlock(typtr->tylock);
 	return;
 }

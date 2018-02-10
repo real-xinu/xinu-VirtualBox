@@ -15,13 +15,20 @@ devcall	ttyputc(
 
 	typtr = &ttytab[devptr->dvminor];
 
+	lock(typtr->tylock);
+
 	/* Handle output CRLF by sending CR first */
 
-        if ( ch==TY_NEWLINE && typtr->tyocrlf ) {
+    if ( ch==TY_NEWLINE && typtr->tyocrlf ) {
                 ttyputc(devptr, TY_RETURN);
 	}
+	
+	unlock(typtr->tylock);		/* in case wait() needs to resched */
 
 	wait(typtr->tyosem);		/* Wait	for space in queue */
+
+	lock(typtr->tylock);
+
 	*typtr->tyotail++ = ch;
 
 	/* Wrap around to beginning of buffer, if needed */
@@ -29,6 +36,7 @@ devcall	ttyputc(
 	if (typtr->tyotail >= &typtr->tyobuff[TY_OBUFLEN]) {
 		typtr->tyotail = typtr->tyobuff;
 	}
+	unlock(typtr->tylock);
 
 	/* Start output in case device is idle */
 
