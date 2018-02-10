@@ -17,9 +17,15 @@ syscall	ptsend(
 	struct	ptnode	*msgnode;	/* Allocated message node 	*/
 	struct	ptnode	*tailnode;	/* Last node in port or NULL	*/
 
+	if (isbadport(portid)){
+		return SYSERR;
+	}
+	ptptr = &porttab[portid];
+
 	mask = disable();
-	if ( isbadport(portid) ||
-	     (ptptr= &porttab[portid])->ptstate != PT_ALLOC ) {
+	lock(portlock);
+	if(ptptr->ptstate != PT_ALLOC){
+		unlock(portlock);
 		restore(mask);
 		return SYSERR;
 	}
@@ -27,12 +33,21 @@ syscall	ptsend(
 	/* Wait for space and verify port has not been reset */
 
 	seq = ptptr->ptseq;		/* Record original sequence	*/
-	if (wait(ptptr->ptssem) == SYSERR
-	    || ptptr->ptstate != PT_ALLOC
-	    || ptptr->ptseq != seq) {
+	unlock(portlock);		/* Can't call wait() while holding lock */
+
+	if (wait(ptptr->ptrsem) == SYSERR){
 		restore(mask);
 		return SYSERR;
 	}
+
+	lock(portlock);
+
+	if(ptptr->ptstate != PT_ALLOC || ptptr->ptseq != seq){
+		unlock(portlock);
+		restore(mask);
+		return SYSERR;
+	}
+
 	if (ptfree == NULL) {
 		panic("Port system ran out of message nodes");
 	}
@@ -53,7 +68,11 @@ syscall	ptsend(
 		tailnode->ptnext = msgnode;
 		ptptr->pttail = msgnode;
 	}
+
+	resched_cntl(DEFER_START); /* can't resched while holding lock */
 	signal(ptptr->ptrsem);
+	unlock(portlock);
+	resched_cntl(DEFER_STOP);
 	restore(mask);
 	return OK;
 }

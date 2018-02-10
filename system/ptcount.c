@@ -20,25 +20,35 @@ int32	ptcount(
 	int32	sndcnt;			/* Count of sender semaphore	*/
 	struct	ptentry	*ptptr;		/* Pointer to port table entry	*/
 
-	mask = disable();
-	if ( isbadport(portid) ||
-		(ptptr= &porttab[portid])->ptstate != PT_ALLOC ) {
-			restore(mask);
-			return SYSERR;
+	if (isbadport(portid)){
+		return SYSERR;
+	}
+	ptptr= &porttab[portid];
+
+	mask = xsec_beg(portlock);
+
+	if (ptptr->ptstate != PT_ALLOC){
+		xsec_end(mask, portlock);
+		return SYSERR;
 	}
 
 	/* Get count of messages available */
-
+	lock(semtab[ptptr->ptrsem].slock); /* prevent count change */
 	count = semcount(ptptr->ptrsem);
 
 	/* If messages are waiting, check for blocked senders */
 
 	if (count >= 0) {
+		lock(semtab[ptptr->ptssem].slock); /* prevent sndcnt change */
 		sndcnt = semcount(ptptr->ptssem);
 		if (sndcnt < 0) {	/* -sndcnt senders blocked */
 			count += -sndcnt;
 		}
+		unlock(semtab[ptptr->ptssem].slock);
 	}
-	restore(mask);
+
+	unlock(semtab[ptptr->ptrsem].slock);
+
+	xsec_end(mask, portlock);
 	return count;
 }

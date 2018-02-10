@@ -16,9 +16,15 @@ uint32	ptrecv(
 	umsg32	msg;			/* Message to return		*/
 	struct	ptnode	*msgnode;	/* First node on message list	*/
 
+	if (isbadport(portid)){
+		return SYSERR;
+	}
+	ptptr = &porttab[portid];
+
 	mask = disable();
-	if ( isbadport(portid) ||
-	     (ptptr= &porttab[portid])->ptstate != PT_ALLOC ) {
+	lock(portlock);
+	if(ptptr->ptstate != PT_ALLOC){
+		unlock(portlock);
 		restore(mask);
 		return (uint32)SYSERR;
 	}
@@ -26,8 +32,17 @@ uint32	ptrecv(
 	/* Wait for message and verify that the port is still allocated */
 
 	seq = ptptr->ptseq;		/* Record orignal sequence	*/
-	if (wait(ptptr->ptrsem) == SYSERR || ptptr->ptstate != PT_ALLOC
-	    || ptptr->ptseq != seq) {
+	unlock(portlock);		/* Can't call wait() while holding lock */
+
+	if (wait(ptptr->ptrsem) == SYSERR){
+		restore(mask);
+		return (uint32)SYSERR;
+	}
+
+	lock(portlock);
+
+	if(ptptr->ptstate != PT_ALLOC || ptptr->ptseq != seq){
+		unlock(portlock);
 		restore(mask);
 		return (uint32)SYSERR;
 	}
@@ -42,7 +57,11 @@ uint32	ptrecv(
 		ptptr->pthead = msgnode->ptnext;
 	msgnode->ptnext = ptfree;		/* Return to free list	*/
 	ptfree = msgnode;
+	
+	resched_cntl(DEFER_START); /* can't resched while holding lock */
 	signal(ptptr->ptssem);
+	unlock(portlock);
+	resched_cntl(DEFER_STOP);
 	restore(mask);
 	return msg;
 }

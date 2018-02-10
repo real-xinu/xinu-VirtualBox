@@ -4,7 +4,7 @@
 
 /*------------------------------------------------------------------------
  *  _ptclear  -  Used by ptdelete and ptreset to clear or reset a port
- *		   (internal function assumes interrupts disabled and
+ *		   (internal function assumes portlock is locked and
  *		   arguments have been checked for validity)
  *------------------------------------------------------------------------
  */

@@ -15,13 +15,20 @@ syscall	ptreset(
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	ptentry	*ptptr;		/* Pointer to port table entry	*/
 
-	mask = disable();
-	if ( isbadport(portid) ||
-	     (ptptr= &porttab[portid])->ptstate != PT_ALLOC ) {
-		restore(mask);
+	if (isbadport(portid)){
 		return SYSERR;
 	}
+	ptptr= &porttab[portid];
+
+	mask = xsec_beg(portlock);
+
+	if(ptptr->ptstate != PT_ALLOC){
+		xsec_end(mask, portlock);
+		return SYSERR;
+	}
+
 	_ptclear(ptptr, PT_ALLOC, disp);
-	restore(mask);
+	
+	xsec_end(mask, portlock);
 	return OK;
 }

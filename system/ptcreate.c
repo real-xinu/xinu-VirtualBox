@@ -15,11 +15,11 @@ syscall	ptcreate(
 	int32	ptnum;			/* Candidate port number to try	*/
 	struct	ptentry	*ptptr;		/* Pointer to port table entry	*/
 
-	mask = disable();
-	if (count < 0) {
-		restore(mask);
+	if (count < 0){
 		return SYSERR;
 	}
+
+	mask = xsec_beg(portlock);
 
 	for (i=0 ; i<NPORTS ; i++) {	/* Count all table entries	*/
 		ptnum = ptnextid;	/* Get an entry to check	*/
@@ -37,10 +37,11 @@ syscall	ptcreate(
 			ptptr->pthead = ptptr->pttail = NULL;
 			ptptr->ptseq++;
 			ptptr->ptmaxcnt = count;
-			restore(mask);
+			xsec_end(mask, portlock);
 			return ptnum;
 		}
 	}
-	restore(mask);
+	
+	xsec_end(mask, portlock);
 	return SYSERR;
 }

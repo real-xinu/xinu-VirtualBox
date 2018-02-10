@@ -25,5 +25,6 @@ extern	struct	ptnode	*ptfree;	/* List of free nodes		*/
 extern	struct	ptentry	porttab[];	/* Port table			*/
 extern	int32	ptnextid;		/* Next port ID to try when	*/
 					/*   looking for a free slot	*/
+extern	lid32	portlock;	/* lock on global port table	*/
 
 #define	isbadport(portid)	( (portid)<0 || (portid)>=NPORTS )
