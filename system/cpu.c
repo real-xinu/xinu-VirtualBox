@@ -270,7 +270,7 @@ status sendipi(
 	
 	/* Send an interrupt (50) to the target processor */
 	lapic->icr_high = (core << 24) & 0xFF000000;
-	lapic->icr_low = 0x00004000 & ipi;
+	lapic->icr_low = 0x00004000 | ipi;
 
     return OK;
 }
