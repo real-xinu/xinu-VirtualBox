@@ -14,24 +14,28 @@ syscall	signaln(
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	sentry	*semptr;	/* Ptr to sempahore table entry */
 
-	mask = disable();
 	if (isbadsem(sem) || (count < 0)) {
-		restore(mask);
 		return SYSERR;
 	}
 	semptr = &semtab[sem];
+
+	/* 	We are adding multiple processes to ready queue, so temporarily 
+	*   stop other cores from rescheduling until all processes are added 
+	*	by locking the readylock.
+	*/ 	
+	mask = xsec_begn(2, semptr->slock, readylock); 
+
 	if (semptr->sstate == S_FREE) {
-		restore(mask);
+		xsec_endn(mask, 2, semptr->slock, readylock);
 		return SYSERR;
 	}
 
-	resched_cntl(DEFER_START);
 	for (; count > 0; count--) {
 		if ((semptr->scount++) < 0) {
 			ready(dequeue(semptr->squeue));
 		}
 	}
-	resched_cntl(DEFER_STOP);
-	restore(mask);
+
+	xsec_endn(mask, 2, semptr->slock, readylock);
 	return OK;
 }

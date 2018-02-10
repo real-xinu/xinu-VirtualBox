@@ -13,19 +13,22 @@ syscall	signal(
 	intmask mask;			/* Saved interrupt mask		*/
 	struct	sentry *semptr;		/* Ptr to sempahore table entry	*/
 
-	mask = disable();
 	if (isbadsem(sem)) {
-		restore(mask);
 		return SYSERR;
 	}
 	semptr= &semtab[sem];
+
+	mask = xsec_beg(semptr->slock);
+
 	if (semptr->sstate == S_FREE) {
-		restore(mask);
+		xsec_end(mask, semptr->slock);
 		return SYSERR;
 	}
+
 	if ((semptr->scount++) < 0) {	/* Release a waiting process */
 		ready(dequeue(semptr->squeue));
 	}
-	restore(mask);
+
+	xsec_end(mask, semptr->slock);
 	return OK;
 }

@@ -13,24 +13,28 @@ syscall	semdelete(
 	intmask mask;			/* Saved interrupt mask		*/
 	struct	sentry *semptr;		/* Ptr to semaphore table entry	*/
 
-	mask = disable();
 	if (isbadsem(sem)) {
-		restore(mask);
 		return SYSERR;
 	}
-	
 	semptr = &semtab[sem];
+	
+	/* 	We are adding multiple processes to ready queue, so temporarily 
+	*   stop other cores from rescheduling until all processes are added 
+	*	by locking the readylock.
+	*/ 
+	mask = xsec_begn(2, semptr->slock, readylock);
+
 	if (semptr->sstate == S_FREE) {
-		restore(mask);
+		xsec_endn(mask, 2, semptr->slock, readylock);
 		return SYSERR;
 	}
+
 	semptr->sstate = S_FREE;
 
-	resched_cntl(DEFER_START);
 	while (semptr->scount++ < 0) {	/* Free all waiting processes	*/
 		ready(getfirst(semptr->squeue));
 	}
-	resched_cntl(DEFER_STOP);
-	restore(mask);
+
+	xsec_endn(mask, 2, semptr->slock, readylock);
 	return OK;
 }

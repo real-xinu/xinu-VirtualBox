@@ -10,30 +10,31 @@ syscall	wait(
 	  sid32		sem		/* Semaphore on which to wait  */
 	)
 {
-	intmask mask;			/* Saved interrupt mask		*/
+	intmask mask;				/* Saved interrupt mask			*/
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	struct	sentry *semptr;		/* Ptr to sempahore table entry	*/
 
-	mask = disable();
 	if (isbadsem(sem)) {
-		restore(mask);
 		return SYSERR;
 	}
-
 	semptr = &semtab[sem];
-	if (semptr->sstate == S_FREE) {
-		restore(mask);
+	prptr = &proctab[currpid];
+
+	mask = xsec_begn(2, semptr->slock, prptr->prlock);
+
+	if (semptr->sstate == S_FREE || prptr->prstate != PR_CURR) {
+		xsec_endn(mask, 2, semptr->slock, prptr->prlock);
 		return SYSERR;
 	}
 
 	if (--(semptr->scount) < 0) {		/* If caller must block	*/
-		prptr = &proctab[currpid];
-		prptr->prstate = PR_WAIT;	/* Set state to waiting	*/
-		prptr->prsem = sem;		/* Record semaphore ID	*/
+		prptr->prstate = PR_WAIT;		/* Set state to waiting	*/
+		prptr->prsem = sem;				/* Record semaphore ID	*/
 		enqueue(currpid,semptr->squeue);/* Enqueue on semaphore	*/
-		resched();			/*   and reschedule	*/
+		resched();						/*   and reschedule	*/
 	}
 
-	restore(mask);
+	xsec_endn(mask, 2, semptr->slock, prptr->prlock);
 	return OK;
 }
+

@@ -12,24 +12,34 @@ syscall	semreset(
 	)
 {
 	intmask	mask;			/* Saved interrupt mask		*/
-	struct	sentry *semptr;		/* Ptr to semaphore table entry */
+	struct	sentry *semptr;	/* Ptr to semaphore table entry */
 	qid16	semqueue;		/* Semaphore's process queue ID	*/
 	pid32	pid;			/* ID of a waiting process	*/
 
-	mask = disable();
-
-	if (count < 0 || isbadsem(sem) || semtab[sem].sstate==S_FREE) {
-		restore(mask);
+	if(count < 0 || isbadsem(sem)){
 		return SYSERR;
 	}
-	
 	semptr = &semtab[sem];
+
+	/* 	We are adding multiple processes to ready queue, so temporarily 
+	*   stop other cores from rescheduling until all processes are added 
+	*	by locking the readylock.
+	*/ 
+	mask = xsec_begn(2, semptr->slock, readylock);
+
+	if (semptr->sstate==S_FREE) {
+		xsec_endn(mask, 2, semptr->slock, readylock);
+		return SYSERR;
+	}
+
 	semqueue = semptr->squeue;	/* Free any waiting processes */
-	resched_cntl(DEFER_START);
-	while ((pid=getfirst(semqueue)) != EMPTY)
+
+	while ((pid=getfirst(semqueue)) != EMPTY){
 		ready(pid);
+	}
+
 	semptr->scount = count;		/* Reset count as specified */
-	resched_cntl(DEFER_STOP);
-	restore(mask);
+
+	xsec_endn(mask, 2, semptr->slock, readylock);
 	return OK;
 }
