@@ -17,14 +17,22 @@ umsg32	recvtime(
 	if (maxwait < 0) {
 		return SYSERR;
 	}
-	mask = disable();
+
+	prptr = &proctab[currpid];
+
+	mask = xsec_begn(2, sleepqlock, prptr->prlock);
+
+	/* Check for state changed by another processor */
+	if(prptr->prstate != PR_CURR){ 
+		xsec_endn(mask, 2, sleepqlock, prptr->prlock);
+		return SYSERR;
+	}
 
 	/* Schedule wakeup and place process in timed-receive state */
 
-	prptr = &proctab[currpid];
 	if (prptr->prhasmsg == FALSE) {	/* Delay if no message waiting	*/
 		if (insertd(currpid,sleepq,maxwait) == SYSERR) {
-			restore(mask);
+			xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 			return SYSERR;
 		}
 		prptr->prstate = PR_RECTIM;
@@ -39,6 +47,7 @@ umsg32	recvtime(
 	} else {
 		msg = TIMEOUT;
 	}
-	restore(mask);
+
+	xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 	return msg;
 }

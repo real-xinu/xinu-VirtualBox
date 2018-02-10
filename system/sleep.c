@@ -24,10 +24,12 @@ syscall	sleep(
  *------------------------------------------------------------------------
  */
 syscall	sleepms(
-	  int32	delay			/* Time to delay in msec.	*/
+	  int32	delay				/* Time to delay in msec.	*/
 	)
 {
-	intmask	mask;			/* Saved interrupt mask		*/
+	intmask	mask;				/* Saved interrupt mask		*/
+	struct	procent *prptr;		/* Ptr to process's table entry	*/
+
 
 	if (delay < 0) {
 		return SYSERR;
@@ -38,16 +40,25 @@ syscall	sleepms(
 		return OK;
 	}
 
+	prptr = &proctab[currpid];
+
+	mask = xsec_begn(2, sleepqlock, prptr->prlock);
+
+	/* check for state changed by other cpu */
+	if (prptr->prstate != PR_CURR){
+		xsec_endn(mask, 2, sleepqlock, prptr->prlock);
+	}
+
 	/* Delay calling process */
 
-	mask = disable();
 	if (insertd(currpid, sleepq, delay) == SYSERR) {
-		restore(mask);
+		xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 		return SYSERR;
 	}
 
 	proctab[currpid].prstate = PR_SLEEP;
 	resched();
-	restore(mask);
+	
+	xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 	return OK;
 }

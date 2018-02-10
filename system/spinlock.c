@@ -17,6 +17,8 @@ void spin_lock(volatile int* lockaddr){
  *------------------------------------------------------------------------
  */
 void spin_unlock(volatile int* lockaddr) {
+    // __sync_synchronize();
+    // *lockaddr = 0;
     __sync_lock_release(lockaddr);
 }
 

@@ -9,37 +9,53 @@
 void	clkhandler()
 {
 	static	uint32	count1000 = 1000;	/* Count to 1000 ms	*/
+	struct cpuent* cpuptr;			/* pointer to cpu entry		*/
 
-	/* Decrement the ms counter, and see if a second has passed */
+	cpuptr = &cputab[getcid()];
 
-	if((--count1000) <= 0) {
+	/* cpu 0 handles global timer state and sleep queue */
 
-		/* One second has passed, so increment seconds count */
+	if(getcid() == 0){
 
-		clktime++;
+		/* Decrement the ms counter, and see if a second has passed */
 
-		/* Reset the local ms counter for the next second */
+		if((--count1000) <= 0) {
 
-		count1000 = 1000;
-	}
+			/* One second has passed, so increment seconds count */
 
-	/* Handle sleeping processes if any exist */
+			clktime++;
 
-	if(!isempty(sleepq)) {
+			/* make new clktime visible to other cores */
 
-		/* Decrement the delay for the first process on the	*/
-		/*   sleep queue, and awaken if the count reaches zero	*/
+			__sync_synchronize();
 
-		if((--queuetab[firstid(sleepq)].qkey) <= 0) {
-			wakeup();
+			/* Reset the local ms counter for the next second */
+
+			count1000 = 1000;
 		}
+
+		/* Handle sleeping processes if any exist */
+
+		lock(sleepqlock);
+
+		if(!isempty(sleepq)) {
+
+			/* Decrement the delay for the first process on the	*/
+			/*   sleep queue, and awaken if the count reaches zero	*/
+
+			if((--queuetab[firstid(sleepq)].qkey) <= 0) {
+				wakeup();
+			}
+		}
+
+		unlock(sleepqlock);
 	}
 
 	/* Decrement the preemption counter, and reschedule when the */
 	/*   remaining time reaches zero			     */
 
-	if((--preempt) <= 0) {
-		preempt = QUANTUM;
+	if((--(cpuptr->preempt)) <= 0) {
+		cpuptr->preempt = QUANTUM;
 		resched();
 	}
 }

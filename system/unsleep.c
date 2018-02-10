@@ -13,24 +13,23 @@ status	unsleep(
         )
 {
 	intmask	mask;			/* Saved interrupt mask		*/
-        struct	procent	*prptr;		/* Ptr to process's table entry	*/
+    struct	procent	*prptr;		/* Ptr to process's table entry	*/
 
-        pid32	pidnext;		/* ID of process on sleep queue	*/
+    pid32	pidnext;		/* ID of process on sleep queue	*/
 					/*   that follows the process	*/
 					/*   which is being removed	*/
 
-	mask = disable();
-
 	if (isbadpid(pid)) {
-		restore(mask);
 		return SYSERR;
 	}
+	prptr = &proctab[pid];
+
+	mask = xsec_begn(2, sleepqlock, prptr->prlock);
 
 	/* Verify that candidate process is on the sleep queue */
 
-	prptr = &proctab[pid];
 	if ((prptr->prstate!=PR_SLEEP) && (prptr->prstate!=PR_RECTIM)) {
-		restore(mask);
+		xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 		return SYSERR;
 	}
 
@@ -42,6 +41,7 @@ status	unsleep(
 	}
 
 	getitem(pid);			/* Unlink process from queue */
-	restore(mask);
+
+	xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 	return OK;
 }
