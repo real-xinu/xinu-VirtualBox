@@ -20,7 +20,7 @@ void	ttyhandle_in (
 
 	lock(typtr->tylock);	/* exclusive access to control block */
 
-	ch = csrptr->buffer;
+	ch = io_inb(csrptr->buffer);
 
 	/* Compute chars available */
 
