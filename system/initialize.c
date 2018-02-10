@@ -190,10 +190,12 @@ static	void	sysinit()
 	for (i = 0; i < NDEVS; i++) {
 		init(i);
 	}
-	return;
+	
 
 	/* initialize and start up secondary cores */
 	cpuinit();
+
+	return;
 }
 
 int32	stop(char *s)
