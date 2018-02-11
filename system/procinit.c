@@ -59,12 +59,11 @@ status procinit(void){
 	cpuptr->defer.attempt = FALSE;
 
 	/* Initialize current and previous processes */
-	cpuptr->cpid = i;
-	cpuptr->ppid = i;
+	cpuptr->cpid = 0;
+	cpuptr->ppid = 0;
 
 	/* Set initial preemption time */
 	cpuptr->preempt = QUANTUM;
-
 
 	return OK;
 }
