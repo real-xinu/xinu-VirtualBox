@@ -77,10 +77,6 @@ void	nulluser()
 
 	enable();
 
-	/* start up secondary cores */
-	
-	cpuinit();
-
 	/* Initialize the network stack and start processes */
 
 	net_init();
