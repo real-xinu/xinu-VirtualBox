@@ -176,8 +176,8 @@ void	cpu_init (void) {
 	pidt->igd_hoffset = (uint32)cpudisp >> 16;
 
 	/* set resched and suspend ipi handlers */
-	set_evec(IPI_RESCHED, (uint32)resched_disp);
-	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
+	//set_evec(IPI_RESCHED, (uint32)resched_disp);
+	//set_evec(IPI_SUSPEND, (uint32)suspend_disp);
 
 	/* Load the IDT */
 
@@ -185,7 +185,7 @@ void	cpu_init (void) {
 
 	apicid = lapic->lapic_id >> 24;
 
-	//kprintf("cpu_init: %d\n", apicid);
+	kprintf("cpu_init: %d\n", apicid);
 
 	/* Enable the Local APIC */
 
@@ -209,7 +209,7 @@ void	cpuhandler (void) {
 
 	apicid = lapic->lapic_id >> 24;
 
-	//kprintf("cpuhandler: cpu %d\n", apicid);
+	kprintf("cpuhandler: cpu %d\n", apicid);
 
 	for(i = 0; i < ncpu; i++) {
 		if(cputab[i].apicid == apicid) {
@@ -279,8 +279,8 @@ status sendipi(
     cid32 core	/* core on which to generate interrupt */
     )
 {
-	lapic->icr_high = (core << 24) & 0xFF000000;
-	lapic->icr_low = 0x00004000 | ipi;
+//	lapic->icr_high = (core << 24) & 0xFF000000;
+//	lapic->icr_low = 0x00004000 | ipi;
     return OK;
 }
 
@@ -293,6 +293,6 @@ status bcastipi(
     int32 ipi	/* interrupt number to generate */
     )
 {
-	lapic->icr_low = 0x000C4000 | ipi;
+//	lapic->icr_low = 0x000C4000 | ipi;
     return OK;
 }
