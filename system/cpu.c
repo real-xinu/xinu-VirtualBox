@@ -41,19 +41,8 @@ void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
 
-	cpubootlock = newlock();
-
-	/* stop auxiliary cores from running until ready */
-
-	lock(cpubootlock);
-
-	/* Scan the memory for ACPI tables */
-
-	acpi_scan();
-
 	/* set resched and suspend ipi handlers */
-	set_evec(IPI_RESCHED, (uint32)resched_disp);
-	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
+	// TODO:
 
 	for(i = 1; i < NCPU; i++){
 		cpuptr = &cputab[i];
@@ -73,9 +62,6 @@ void cpuinit(void){
 		cpu_run(i, prnull);
 		sleep(1);
 	}
-
-	/* set auxiliary cores free */
-	unlock(cpubootlock);
 }
 
 
@@ -154,6 +140,8 @@ void	cpu_run (
 }
 
 void	cpudisp(void);
+void	resched_disp(void);
+void	suspend_disp(void);
 
 /*------------------------------------------------------------------------
  * cpu_init  -  Initialize data structures for a CPU
@@ -176,8 +164,24 @@ void	cpu_init (void) {
 	pidt->igd_hoffset = (uint32)cpudisp >> 16;
 
 	/* set resched and suspend ipi handlers */
-	//set_evec(IPI_RESCHED, (uint32)resched_disp);
-	//set_evec(IPI_SUSPEND, (uint32)suspend_disp);
+
+	pidt = &idt[IPI_RESCHED];
+	pidt->igd_loffset = (uint32)resched_disp;
+	pidt->igd_segsel = 0x8;
+	pidt->igd_mbz = 0;
+	pidt->igd_type = IGDT_TRAPG;
+	pidt->igd_dpl = 0;
+	pidt->igd_present = 1;
+	pidt->igd_hoffset = (uint32)resched_disp >> 16;
+
+	pidt = &idt[IPI_SUSPEND];
+	pidt->igd_loffset = (uint32)suspend_disp;
+	pidt->igd_segsel = 0x8;
+	pidt->igd_mbz = 0;
+	pidt->igd_type = IGDT_TRAPG;
+	pidt->igd_dpl = 0;
+	pidt->igd_present = 1;
+	pidt->igd_hoffset = (uint32)suspend_disp >> 16;
 
 	/* Load the IDT */
 
@@ -185,7 +189,7 @@ void	cpu_init (void) {
 
 	apicid = lapic->lapic_id >> 24;
 
-	kprintf("cpu_init: %d\n", apicid);
+//	kprintf("cpu_init: %d\n", apicid);
 
 	/* Enable the Local APIC */
 
@@ -209,7 +213,7 @@ void	cpuhandler (void) {
 
 	apicid = lapic->lapic_id >> 24;
 
-	kprintf("cpuhandler: cpu %d\n", apicid);
+//	kprintf("cpuhandler: cpu %d\n", apicid);
 
 	for(i = 0; i < ncpu; i++) {
 		if(cputab[i].apicid == apicid) {
@@ -231,6 +235,8 @@ void	cpuhandler (void) {
  *------------------------------------------------------------------------
  */
 void resched_handler (void) {
+	kprintf("resched_handler cpu %d\n", getcid());
+	while(1);
 	resched_cntl(DEFER_START);
 	resched();
 	lapic->eoi = 0;
@@ -263,6 +269,32 @@ asm (
 );
 
 /*------------------------------------------------------------------------
+ * resched_disp  -  Dispatcher function for resched ipi
+ *------------------------------------------------------------------------
+ */
+asm (
+
+	".globl	resched_disp\n\t"
+	"resched_disp:\n\t"
+	"cli\n\t"
+	"call resched_handler\n\t"
+	"iret\n\t"
+);
+
+/*------------------------------------------------------------------------
+ * suspend_disp  -  Dispatcher function for suspend ipi
+ *------------------------------------------------------------------------
+ */
+asm (
+
+	".globl	suspend_disp\n\t"
+	"suspend_disp:\n\t"
+	"cli\n\t"
+	"call suspend_handler\n\t"
+	"iret\n\t"
+);
+
+/*------------------------------------------------------------------------
  *  getcid  -  Return the ID of the currently executing core
  *------------------------------------------------------------------------
  */
@@ -279,8 +311,8 @@ status sendipi(
     cid32 core	/* core on which to generate interrupt */
     )
 {
-//	lapic->icr_high = (core << 24) & 0xFF000000;
-//	lapic->icr_low = 0x00004000 | ipi;
+	lapic->icr_high = (core << 24) & 0xFF000000;
+	lapic->icr_low = 0x00004000 | ipi;
     return OK;
 }
 
@@ -293,6 +325,6 @@ status bcastipi(
     int32 ipi	/* interrupt number to generate */
     )
 {
-//	lapic->icr_low = 0x000C4000 | ipi;
+	lapic->icr_low = 0x000C4000 | ipi;
     return OK;
 }

@@ -196,10 +196,6 @@ extern	void	ip_hton(struct netpacket *);
 extern	process	ipout(void);
 extern	status	ip_enqueue(struct netpacket *);
 
-/* in file ipidisp.S */
-extern	void	resched_disp(void);
-extern	void	suspend_disp(void);
-
 /* in file net.c */
 extern	void	net_init(void);
 extern	process	netin(void);

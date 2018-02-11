@@ -18,15 +18,15 @@ process	main(void)
 
 	sleep(2);
 
-	cpu_run(2, cpufunc1);
+//	cpu_run(2, cpufunc1);
 
-	sleep(2);
+//	sleep(2);
 
-	cpu_run(1, cpufunc2);
+//	cpu_run(1, cpufunc2);
 
-	sleep(2);
+//	sleep(2);
 
-	cpu_run(2, cpufunc2);
+//	cpu_run(2, cpufunc2);
 
 	sleep(1000);
 

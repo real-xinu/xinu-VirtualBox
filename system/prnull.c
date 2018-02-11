@@ -8,8 +8,7 @@
  */
 void	prnull(void){
 	if(getcid() != 0){
-		lock(cpubootlock);
-		unlock(cpubootlock);
+		kprintf("cpu %d prnull\n");
 		resched();
 		enable();
 	}
