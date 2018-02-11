@@ -236,9 +236,10 @@ void	cpuhandler (void) {
  */
 void resched_handler (void) {
 	kprintf("resched_handler cpu %d\n", getcid());
-	while(1);
 	resched_cntl(DEFER_START);
+	kprintf("cpu %d about to resched\n", getcid());
 	resched();
+	kprintf("cpu %d returned from resched\n", getcid());
 	lapic->eoi = 0;
 	resched_cntl(DEFER_STOP);
 	return;
@@ -264,6 +265,7 @@ asm (
 
 	".globl	cpudisp\n\t"
 	"cpudisp:\n\t"
+	"cli\n\t"
 	"call cpuhandler\n\t"
 	"iret\n\t"
 );

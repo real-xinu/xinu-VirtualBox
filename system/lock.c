@@ -12,8 +12,11 @@ status lock(
 		lid32	lid		/* id of lock to lock */
 	){
 	struct lentry* lockptr;	/* Ptr to lock table entry */
+//	if(!getcid() && lid == 204){kprintf("cpu 0 locking %d\n", lid);}
 
+	if(getcid()){kprintf("locking %d\n", lid);}
 	if (isbadlid(lid)) {
+		if(getcid()){kprintf("bad lid, returning\n");}
 		return SYSERR;
 	}
 
@@ -23,6 +26,8 @@ status lock(
 		lockptr->lcount++;
 		return OK;
 	}
+	
+	if(getcid()){kprintf("lock owned by %d, spinning\n", lockptr->lowner);}
 
 	spin_lock(&(lockptr->lock));
 	lockptr->lowner = getcid();
@@ -38,6 +43,7 @@ status lock(
 status unlock(
 		lid32	lid		/* id of lock to unlock */
 	){
+//	if(!getcid() && lid == 204){kprintf("cpu 0 unlocking %d\n", lid);}
 
 	struct lentry* lockptr;	/* Ptr to lock table entry */
 

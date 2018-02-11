@@ -18,21 +18,28 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 
 	/* If rescheduling is deferred, record attempt and return */
 
+	if(getcid()){kprintf("cpu %d in resched\n", getcid());}
 	if (dfrptr->ndefers > 0) {
 		dfrptr->attempt = TRUE;
+		if(getcid()){kprintf("resched deffered, returning\n");}
 		return;
 	}
+	if(getcid()){kprintf("cpu %d resched not deferred\n", getcid());}
+	if(getcid()){kprintf("currpid = %d\n", currpid);}
 
 	/* Point to process table entry for the current (old) process */
 	ptold = &proctab[cpuptr->cpid];
 
 	lock(readylock);
+	if(getcid()){kprintf("locked readylock\n");}
 	lock(ptold->prlock);
+	if(getcid()){kprintf("locked old prlock\n");}
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {
 			unlock(ptold->prlock);
 			unlock(readylock);
+			if(getcid()){kprintf("ptold->prprio < firstkey(readylist) (%d < %d), returning\n", ptold->prprio, firstkey(readylist));}
 			return;
 		}
 
