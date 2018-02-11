@@ -24,6 +24,7 @@ struct	cpuent {
 
 extern	int32	ncpu;
 extern	struct	cpuent 	cputab[];
+extern  lid32	cpubootlock;
 
 #define CPU_NONE	-1
 #define CPU_ALL		-2

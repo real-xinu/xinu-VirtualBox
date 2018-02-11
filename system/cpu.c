@@ -4,6 +4,7 @@
 
 struct	cpuent cputab[MAX_CPU];
 int32	ncpu = 0;
+lid32	cpubootlock;
 
 /* cpu_start1: 16-bit code that runs when a CPU is started:
    (gcc-4 cannot generate 16-bit code. This code is generated
@@ -40,6 +41,12 @@ void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
 
+	cpubootlock = newlock();
+
+	/* stop auxiliary cores from running until ready */
+
+	lock(cpubootlock);
+
 	/* Scan the memory for ACPI tables */
 
 	acpi_scan();
@@ -48,7 +55,7 @@ void cpuinit(void){
 	set_evec(IPI_RESCHED, (uint32)resched_disp);
 	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
 
-	for(i = 0; i < NCPU; i++){
+	for(i = 1; i < NCPU; i++){
 		cpuptr = &cputab[i];
 
 		/* Scheduling is not currently blocked */
@@ -63,10 +70,12 @@ void cpuinit(void){
 		cpuptr->preempt = QUANTUM;
 
 		/* Set auxiliary cores running null process */
-		if (i > 0) {
-			cpu_run(i, prnull);
-		}
+		cpu_run(i, prnull);
+		sleep(1);
 	}
+
+	/* set auxiliary cores free */
+	unlock(cpubootlock);
 }
 
 
@@ -260,35 +269,6 @@ asm (
 cid32 getcid(void){
 	return (lapic->lapic_id >> 24);
 }
-
-/*------------------------------------------------------------------------
- * set_irq_target - set gic distributor to forward irq to target cpu
- *------------------------------------------------------------------------
- */ // TODO:
-// status set_irq_target(uint32 xnum, cid32 cpu)
-// {
-// 	struct gic_distreg* gicdist = (struct gic_distreg*)GIC_DIST_BASE;
-// 	int32 pctgt = 0;	/* target mask */
-// 	int32 i;		/* iterator over target mask */
-
-// 	if(xnum > GIC_IRQ_MAX) {
-// 		return SYSERR;
-// 	}
-
-// 	if(cpu == CPU_ALL){	/* forward irq to all cores */
-// 		for (i = 0; i < NCPU; i++){
-// 			pctgt |= (1 << i);
-// 		}
-// 	} else if (isbadcid(cpu)) {
-// 		return SYSERR;
-// 	} else {
-// 		pctgt = (1 << cpu);
-// 	}
-
-// 	gicdist->pctgt[xnum] = pctgt;
-
-// 	return OK;
-// }
 
 /*------------------------------------------------------------------------
  *  sendipi  -  Generate inter-processor interrupt on given core

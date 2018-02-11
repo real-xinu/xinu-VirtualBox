@@ -13,6 +13,7 @@ status procinit(void){
 
 	uint32 i;					/* iterator over proctab */
 	struct	procent	*prptr;		/* Ptr to process table entry	*/
+	struct	cpuent	*cpuptr;	/* Ptr to main cpu entry	*/
 
 	/* Initialize locks on the process table and global process count */
 
@@ -49,6 +50,21 @@ status procinit(void){
 		cputab[i].cpid = i;
 		prptr->prcpu = i;
 	}
+
+	/* Initialize process sheduling info for main CPU */
+	cpuptr = &cputab[0];
+
+	/* Scheduling is not currently blocked */
+	cpuptr->defer.ndefers = 0;
+	cpuptr->defer.attempt = FALSE;
+
+	/* Initialize current and previous processes */
+	cpuptr->cpid = i;
+	cpuptr->ppid = i;
+
+	/* Set initial preemption time */
+	cpuptr->preempt = QUANTUM;
+
 
 	return OK;
 }

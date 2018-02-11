@@ -7,5 +7,11 @@
  *------------------------------------------------------------------------
  */
 void	prnull(void){
+	if(getcid() != 0){
+		lock(cpubootlock);
+		unlock(cpubootlock);
+		resched();
+		enable();
+	}
 	while(TRUE);
 }
