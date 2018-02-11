@@ -40,6 +40,10 @@ void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
 
+	/* Scan the memory for ACPI tables */
+
+	acpi_scan();
+
 	/* set resched and suspend ipi handlers */
 	set_evec(IPI_RESCHED, (uint32)resched_disp);
 	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
