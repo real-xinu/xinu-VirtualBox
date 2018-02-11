@@ -13,4 +13,3 @@ extern	uint32	clktime;	/* current time in secs since boot	*/
 
 extern	qid16	sleepq;		/* queue for sleeping processes		*/
 extern	lid32	sleepqlock;	/* lock for sleep queue		*/
-extern	uint32	preempt;	/* preemption counter			*/
