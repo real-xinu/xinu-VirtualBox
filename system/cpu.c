@@ -56,7 +56,7 @@ void cpuinit(void){
 		cpuptr->ppid = i;
 
 		/* Set initial preemption time */
-		cpuptr->preempt = 1000;
+		cpuptr->preempt = QUANTUM;
 
 		/* Set auxiliary cores running null process */
 		if (i > 0) {
@@ -162,6 +162,10 @@ void	cpu_init (void) {
 	pidt->igd_present = 1;
 	pidt->igd_hoffset = (uint32)cpudisp >> 16;
 
+	/* set resched and suspend ipi handlers */
+	set_evec(IPI_RESCHED, (uint32)resched_disp);
+	set_evec(IPI_SUSPEND, (uint32)suspend_disp);
+
 	/* Load the IDT */
 
 	lidt();
@@ -207,6 +211,30 @@ void	cpuhandler (void) {
 	if(cputab[i].func) {
 		(cputab[i].func)();
 	}
+}
+
+/*------------------------------------------------------------------------
+ * resched_handler  -  Handle resched IPI
+ *------------------------------------------------------------------------
+ */
+void resched_handler (void) {
+	resched_cntl(DEFER_START);
+	resched();
+	lapic->eoi = 0;
+	resched_cntl(DEFER_STOP);
+	return;
+}
+
+/*------------------------------------------------------------------------
+ * suspend_handler  -  Handle suspend IPI
+ *------------------------------------------------------------------------
+ */
+void suspend_handler (void) {
+	resched_cntl(DEFER_START);
+	suspend(currpid);
+	lapic->eoi = 0;
+	resched_cntl(DEFER_STOP);
+	return;
 }
 
 /*------------------------------------------------------------------------
@@ -259,7 +287,7 @@ cid32 getcid(void){
 // }
 
 /*------------------------------------------------------------------------
- *  sendsgi  -  Generate inter-processor interrupt on given core
+ *  sendipi  -  Generate inter-processor interrupt on given core
  *------------------------------------------------------------------------
  */
 status sendipi(
@@ -267,16 +295,13 @@ status sendipi(
     cid32 core	/* core on which to generate interrupt */
     )
 {
-	
-	/* Send an interrupt (50) to the target processor */
 	lapic->icr_high = (core << 24) & 0xFF000000;
 	lapic->icr_low = 0x00004000 | ipi;
-
     return OK;
 }
 
 /*------------------------------------------------------------------------
- *  bcastsgi  -  broadcast inter-processor interrupt on all cores 
+ *  bcastipi  -  broadcast inter-processor interrupt on all cores 
  * 					 except caller
  *------------------------------------------------------------------------
  */
@@ -284,12 +309,6 @@ status bcastipi(
     int32 ipi	/* interrupt number to generate */
     )
 {
-	cid32 core;
-	cid32 thiscore = getcid();
-	for(core = 0; core < NCPU; core++){
-		if(core != thiscore){
-			sendipi(ipi, core);
-		}
-	}
-	return OK;
+	lapic->icr_low = 0x000C4000 | ipi;
+    return OK;
 }

@@ -17,7 +17,7 @@ resched_disp:
 		cli			/* Prevent further interrupts	*/
 		movb	$EOI,%al	/* Clear the interrupt		*/
 		outb	%al,$OCW1_2
-		call	resched	/* Call the handler		*/
+		call	resched_handler	/* Call the handler		*/
 		popfl			/* Restore the flags register	*/
 		popal			/* Restore general-purpose regs.*/
 		iret			/* Return from interrupt	*/
@@ -33,7 +33,7 @@ suspend_disp:
 		cli			/* Prevent further interrupts	*/
 		movb	$EOI,%al	/* Clear the interrupt		*/
 		outb	%al,$OCW1_2
-		call	suspend	/* Call the handler		*/
+		call	suspend_handler	/* Call the handler		*/
 		popfl			/* Restore the flags register	*/
 		popal			/* Restore general-purpose regs.*/
 		iret			/* Return from interrupt	*/
