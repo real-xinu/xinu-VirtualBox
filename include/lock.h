@@ -12,7 +12,7 @@
  */
 struct lentry {
 	volatile int32	lock;		/* Actual lock word used by hardware */
-	cid32	lowner;				/* id of cpu that currently owns lock */
+	pid32	lowner;				/* id of process that currently owns lock */
 	uint32	lcount;				/* count locks by lowner */
 	int32	lpad[13];			/* padding to reach size of ERG */
 };

@@ -15,6 +15,7 @@ status	ready(
 {
 	register struct procent *prptr;
 	intmask mask;	
+	kprintf("enter ready\n");
 
 	if (isbadpid(pid)) {
 		return SYSERR;
@@ -38,5 +39,6 @@ status	ready(
 	bcastipi(IPI_RESCHED);
 
 	xsec_endn(mask, 2, readylock, prptr->prlock);
+	kprintf("exit ready\n");
 	return OK;
 }

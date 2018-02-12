@@ -59,11 +59,13 @@ void	net_init (void)
 	}
 
 	/* Create the IP output process */
+	kprintf("creating ipout process.\n");
 
 	resume(create(ipout, NETSTK, NETPRIO, "ipout", 0, NULL));
 
 	/* Create a network input process */
 
+	kprintf("creating netin process\n");
 	resume(create(netin, NETSTK, NETPRIO, "netin", 0, NULL));
 }
 

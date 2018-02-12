@@ -14,24 +14,26 @@ status lock(
 	struct lentry* lockptr;	/* Ptr to lock table entry */
 //	if(!getcid() && lid == 204){kprintf("cpu 0 locking %d\n", lid);}
 
-	if(getcid()){kprintf("locking %d\n", lid);}
+	if(lid==204){kprintf("locking %d\n", lid);}
 	if (isbadlid(lid)) {
-		if(getcid()){kprintf("bad lid, returning\n");}
+		if(lid==204){kprintf("bad lid, returning\n");}
 		return SYSERR;
 	}
 
 	lockptr = &locktab[lid];
 
-	if(lockptr->lowner == getcid()){
+	if(lockptr->lowner == getpid()){
 		lockptr->lcount++;
+		if(lid==204){kprintf("I own lock, count = %d\n", lockptr->lcount);}
 		return OK;
 	}
 	
-	if(getcid()){kprintf("lock owned by %d, spinning\n", lockptr->lowner);}
+	if(lid==204){kprintf("lock owned by %d, spinning\n", lockptr->lowner);}
 
 	spin_lock(&(lockptr->lock));
-	lockptr->lowner = getcid();
+	lockptr->lowner = getpid();
 	lockptr->lcount++;
+	if(lid==204){kprintf("got lock, owner = %d, count = %d\n", lockptr->lowner, lockptr->lcount);}
 
 	return OK;
 }
@@ -43,7 +45,7 @@ status lock(
 status unlock(
 		lid32	lid		/* id of lock to unlock */
 	){
-//	if(!getcid() && lid == 204){kprintf("cpu 0 unlocking %d\n", lid);}
+	if(!getcid() && lid == 204){kprintf("cpu 0 unlocking %d\n", lid);}
 
 	struct lentry* lockptr;	/* Ptr to lock table entry */
 
@@ -53,7 +55,7 @@ status unlock(
 
 	lockptr = &locktab[lid];
 
-	if(lockptr->lowner != getcid()){
+	if(lockptr->lowner != getpid()){
 		return SYSERR;
 	}
 

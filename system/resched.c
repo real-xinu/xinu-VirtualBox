@@ -14,32 +14,34 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	struct cpuent *cpuptr;		/* Ptr to cpu entry						*/
 
 	cpuptr = &cputab[getcid()];
+	if(!cpuptr->resched_flag){
 	dfrptr = &cpuptr->defer;
+	kprintf("process %d enter resched\n", getpid());
 
 	/* If rescheduling is deferred, record attempt and return */
 
-	if(getcid()){kprintf("cpu %d in resched\n", getcid());}
 	if (dfrptr->ndefers > 0) {
 		dfrptr->attempt = TRUE;
-		if(getcid()){kprintf("resched deffered, returning\n");}
+		if(17){kprintf("resched deffered, returning\n");}
 		return;
 	}
-	if(getcid()){kprintf("cpu %d resched not deferred\n", getcid());}
-	if(getcid()){kprintf("currpid = %d\n", currpid);}
+	if(17){kprintf("cpu %d resched not deferred\n", getcid());}
 
 	/* Point to process table entry for the current (old) process */
 	ptold = &proctab[cpuptr->cpid];
 
+	kprintf("about to lock readylock\n");
 	lock(readylock);
-	if(getcid()){kprintf("locked readylock\n");}
+	if(17){kprintf("locked readylock\n");}
 	lock(ptold->prlock);
-	if(getcid()){kprintf("locked old prlock\n");}
+	if(17){kprintf("locked old prlock\n");}
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {
 			unlock(ptold->prlock);
+			kprintf("not switching, unlock readylock\n");
 			unlock(readylock);
-			if(getcid()){kprintf("ptold->prprio < firstkey(readylist) (%d < %d), returning\n", ptold->prprio, firstkey(readylist));}
+			if(17){kprintf("ptold->prprio < firstkey(readylist) (%d < %d), returning\n", ptold->prprio, firstkey(readylist));}
 			return;
 		}
 
@@ -52,12 +54,24 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	/* Force context switch to highest priority ready process */
 	cpuptr->ppid = cpuptr->cpid;		/* record previous process		*/
 	cpuptr->cpid = dequeue(readylist);	/* get and record new process	*/
+	kprintf("switching process to %d\n", cpuptr->cpid); 
 	ptnew = &proctab[cpuptr->cpid];		
 	lock(ptnew->prlock);
+	kprintf("locked new process lock\n");
 	ptnew->prstate = PR_CURR;			/* set new process as current	*/
 	cpuptr->preempt = QUANTUM;			/* Reset time slice for process	*/
 
+	kprintf("calling ctxsw\n");
+	cpuptr->resched_flag = TRUE;
+
+	/* hand over locks to new process before ctxsw */
+	locktab[ptnew->prlock].lowner = cpuptr->cpid;
+	locktab[ptold->prlock].lowner = cpuptr->cpid;
+	locktab[readylock].lowner = cpuptr->cpid;
+
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
+	}
+	kprintf("return from ctxsw\n");
 
 	/* Old process returns here when resumed */
 
@@ -79,9 +93,11 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	/* unlock locks locked by previous process still held by this cpu */
 	unlock(ptnew->prlock);
 	unlock(ptold->prlock);
+	kprintf("done switching to new process, unlock readylock\n");
 	unlock(readylock);
 
 
+	kprintf("exit resched\n");
 	return;
 }
 

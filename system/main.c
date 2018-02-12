@@ -14,7 +14,7 @@ void	cpufunc2 (void) {
 
 process	main(void)
 {
-	cpu_run(1, cpufunc1);
+//	cpu_run(1, cpufunc1);
 
 	sleep(2);
 
