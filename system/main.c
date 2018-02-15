@@ -28,9 +28,7 @@ process	main(void)
 
 //	cpu_run(2, cpufunc2);
 
-	sleep(10);
-
-	kprintf("lcount for 204 = %d\n", locktab[204].lcount);
+	sleep(1000);
 
 	/* Run the Xinu shell */
 
