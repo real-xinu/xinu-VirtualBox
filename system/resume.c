@@ -13,7 +13,6 @@ pri16	resume(
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	pri16	prio;			/* Priority to return		*/
-	kprintf("enter resume\n");
 
 	if (isbadpid(pid)) {
 		return (pri16)SYSERR;
@@ -31,6 +30,5 @@ pri16	resume(
 	ready(pid);
 
 	xsec_endn(mask, 2, readylock, prptr->prlock);
-	kprintf("exit resume\n");
 	return prio;
 }
