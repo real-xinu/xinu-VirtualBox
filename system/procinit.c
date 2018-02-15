@@ -57,6 +57,7 @@ status procinit(void){
 	/* Scheduling is not currently blocked */
 	cpuptr->defer.ndefers = 0;
 	cpuptr->defer.attempt = FALSE;
+	cpuptr->resched_flag = FALSE;
 
 	/* Initialize current and previous processes */
 	cpuptr->cpid = 0;
