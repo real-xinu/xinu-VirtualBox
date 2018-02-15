@@ -79,7 +79,7 @@ void	nulluser()
 
 	/* Enable interrupts */
 
-	enable();
+	//enable();
 
 	/* Initialize the network stack and start processes */
 
