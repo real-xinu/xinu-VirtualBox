@@ -84,11 +84,12 @@ pid32	create(
 					/*   half-way through a call to	*/
 					/*   ctxsw that "returns" to the*/
 					/*   new process		*/
+	*--saddr = (long)prstart;	/* new process calls prstart */
 	*--saddr = savsp;		/* This will be register ebp	*/
 					/*   for process exit		*/
 	savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
-	*--saddr = 0x00000200;		/* New process runs with	*/
-					/*   interrupts enabled		*/
+	*--saddr = 0x00000000;		/* New process runs with	*/
+					/*   interrupts disabled	*/
 
 	/* Basically, the following emulates an x86 "pushal" instruction*/
 

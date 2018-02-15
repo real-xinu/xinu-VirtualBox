@@ -57,6 +57,9 @@ extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
 /* in file ctxsw.S */
 extern	void	ctxsw(void *, void *);
 
+/* in file ctxsw_ret.c */
+extern	void	ctxsw_ret(void);
+
 /* in file dhcp.c */
 extern	uint32	getlocalip(void);
 
@@ -356,6 +359,9 @@ extern	void	platinit(void);
 
 /* in file prnull.c */
 extern	void	prnull(void);
+
+/* in file prstart.c */
+extern	void	prstart(void);
 
 /* in file procinit.c */
 extern	status	procinit(void);
