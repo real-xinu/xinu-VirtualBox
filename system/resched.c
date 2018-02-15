@@ -10,23 +10,23 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 {
 	struct procent *ptold;		/* Ptr to table entry for old process	*/
 	struct procent *ptnew;		/* Ptr to table entry for new process	*/
-	struct deferent *dfrptr;	/* Ptr to defer entry for this core		*/
+	// struct deferent *dfrptr;	/* Ptr to defer entry for this core		*/
 	struct cpuent *cpuptr;		/* Ptr to cpu entry						*/
 	cpuptr = &cputab[getcid()];
-	if(!cpuptr->resched_flag){
+
 	kprintf("process %d enter resched()\n", getpid());
-	dfrptr = &cpuptr->defer;
+	// dfrptr = &cpuptr->defer;
 
 	/* If rescheduling is deferred, record attempt and return */
 
-	if (dfrptr->ndefers > 0) {
-		dfrptr->attempt = TRUE;
+	if (Defer.ndefers > 0) {
+		Defer.attempt = TRUE;
 		kprintf("process %d resched() deferred, return\n", getpid());
 		return;
 	}
 
 	/* Point to process table entry for the current (old) process */
-	ptold = &proctab[cpuptr->cpid];
+	ptold = &proctab[currpid];
 
 	lock(readylock);
 	lock(ptold->prlock);
@@ -42,52 +42,32 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		/* Old process will no longer remain current */
 
 		ptold->prstate = PR_READY;
-		insert(cpuptr->cpid, readylist, ptold->prprio);
+		insert(currpid, readylist, ptold->prprio);
 	}
 
 	/* Force context switch to highest priority ready process */
-	cpuptr->ppid = cpuptr->cpid;		/* record previous process		*/
-	cpuptr->cpid = dequeue(readylist);	/* get and record new process	*/
-	ptnew = &proctab[cpuptr->cpid];		
+	prevpid = currpid;				/* record previous process		*/
+	currpid = dequeue(readylist);	/* get and record new process	*/
+	ptnew = &proctab[currpid];		
 	lock(ptnew->prlock);
-	ptnew->prstate = PR_CURR;			/* set new process as current	*/
-	cpuptr->preempt = QUANTUM;			/* Reset time slice for process	*/
-
-	cpuptr->resched_flag = TRUE;
+	ptnew->prstate = PR_CURR;		/* set new process as current	*/
+	cpuptr->preempt = QUANTUM;		/* Reset time slice for process	*/
 
 	/* hand over locks to new process before ctxsw */
-	locktab[ptnew->prlock].lowner = cpuptr->cpid;
-	locktab[ptold->prlock].lowner = cpuptr->cpid;
-	locktab[readylock].lowner = cpuptr->cpid;
+	locktab[ptnew->prlock].lowner = currpid;
+	locktab[ptold->prlock].lowner = currpid;
+	locktab[readylock].lowner = currpid;
+
+	/* record where processes are running in their table entries	*/
+	ptnew->prcpu = getcid();
+	ptold->prcpu = CPU_NONE;
 
 	kprintf("process %d, core %d: enter ctxsw\n", cpuptr->ppid, getcid());
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
-	}
 
 	kprintf("process %d, core %d: exit ctxsw\n", getpid(), getcid());
 	/* Old process returns here when resumed */
-
-	/* update pointers on new process stack */			
-	cpuptr = &cputab[getcid()];
-	ptnew = &proctab[cpuptr->cpid];
-	ptold = &proctab[cpuptr->ppid];
-
-	/* record where processes are running in their table entries	*/
-	ptnew->prcpu = getcid();			
-	ptold->prcpu = CPU_NONE;
-
-	cpuptr->resched_flag = FALSE;
-
-	/* handle dying process	*/
-	if (ptold->prstate == PR_DEAD){
-		freestk(ptold->prstkbase, ptold->prstklen);
-		ptold->prstate = PR_FREE;
-	}
-
-	/* unlock locks locked by previous process still held by this cpu */
-	unlock(ptnew->prlock);
-	unlock(ptold->prlock);
-	unlock(readylock);
+	ctxsw_ret();
 
 	kprintf("process %d done switching, return\n", getpid());
 	return;

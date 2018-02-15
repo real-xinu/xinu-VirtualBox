@@ -20,7 +20,6 @@ struct	cpuent {
 	pid32 ppid;					/* ID of previously executing process */
 	struct deferent defer;		/* Deferred scheduling for cpu */
 	uint32 preempt;				/* count 1000 ms for cpu */
-	bool8 resched_flag;
 };
 
 extern	int32	ncpu;
