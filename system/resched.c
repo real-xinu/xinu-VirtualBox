@@ -12,15 +12,16 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	struct procent *ptnew;		/* Ptr to table entry for new process	*/
 	struct deferent *dfrptr;	/* Ptr to defer entry for this core		*/
 	struct cpuent *cpuptr;		/* Ptr to cpu entry						*/
-
 	cpuptr = &cputab[getcid()];
 	if(!cpuptr->resched_flag){
+	kprintf("process %d enter resched()\n", getpid());
 	dfrptr = &cpuptr->defer;
 
 	/* If rescheduling is deferred, record attempt and return */
 
 	if (dfrptr->ndefers > 0) {
 		dfrptr->attempt = TRUE;
+		kprintf("process %d resched() deferred, return\n", getpid());
 		return;
 	}
 
@@ -34,6 +35,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		if (ptold->prprio > firstkey(readylist)) {
 			unlock(ptold->prlock);
 			unlock(readylock);
+			kprintf("process %d still top priority, return\n", getpid());
 			return;
 		}
 
@@ -87,6 +89,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	unlock(ptold->prlock);
 	unlock(readylock);
 
+	kprintf("process %d done switching, return\n", getpid());
 	return;
 }
 
