@@ -15,7 +15,6 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 
 	if (Defer.ndefers > 0) {
 		Defer.attempt = TRUE;
-		kprintf("process %d resched() deferred, return\n", getpid());
 		return;
 	}
 
@@ -29,7 +28,6 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		if (ptold->prprio > firstkey(readylist)) {
 			unlock(ptold->prlock);
 			unlock(readylock);
-			kprintf("process %d still top priority, return\n", getpid());
 			return;
 		}
 

@@ -19,13 +19,13 @@ status lock(
 
 	lockptr = &locktab[lid];
 
-	if(lockptr->lowner == getcid()){
+	if(lockptr->lowner == currpid){
 		lockptr->lcount++;
 		return OK;
 	}
 
 	spin_lock(&(lockptr->lock));
-	lockptr->lowner = getcid();
+	lockptr->lowner = currpid;
 	lockptr->lcount++;
 
 	return OK;
@@ -47,7 +47,7 @@ status unlock(
 
 	lockptr = &locktab[lid];
 
-	if(lockptr->lowner != getcid()){
+	if(lockptr->lowner != currpid){
 		return SYSERR;
 	}
 
