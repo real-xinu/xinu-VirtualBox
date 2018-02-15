@@ -28,7 +28,7 @@ status lock(
 	lockptr->lowner = getpid();
 	lockptr->lcount++;
 
-	if(lid == readylock){kprintf("process %d, core %d: locked %d\n", getpid(), getcid(), lid);}
+//	kprintf("process %d, core %d: locked %d\n", getpid(), getcid(), lid);
 	return OK;
 }
 
@@ -55,7 +55,7 @@ status unlock(
 	if(--lockptr->lcount == 0){
 		lockptr->lowner = SLK_NONE;
 		spin_unlock(&(lockptr->lock));
-		if(lid == readylock){kprintf("process %d, core %d: unlocked %d\n", getpid(), getcid(), lid);}
+//		kprintf("process %d, core %d: unlock %d\n", getpid(), getcid(), lid);
 	}
 
 	return OK;
