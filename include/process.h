@@ -69,3 +69,4 @@ extern	lid32	proctablock;	/* Lock on the process table and global process count	
 
 /* id of process currently executing on this core */
 #define	currpid		(cputab[getcid()].cpid)
+#define	prevpid		(cputab[getcid()].ppid)
