@@ -49,11 +49,6 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptnew->prcpu = getcid();
 	ptold->prcpu = CPU_NONE;
 
-	/* hand over locks to new process before ctxsw */
-	locktab[ptnew->prlock].lowner = currpid;
-	locktab[ptold->prlock].lowner = currpid;
-	locktab[readylock].lowner = currpid;
-
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
 
 	/* Old process returns here when resumed */
