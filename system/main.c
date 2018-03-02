@@ -25,7 +25,7 @@ void	cpufunc1 (void) {
 
 void	cpufunc2 (int id) {
 	int i;
-	for(i = 0; i < 10000000; i++){
+	for(i = 0; i < 3; i++){
 		// spin_lock(&slock);
 		// lock(mylock);
 		wait(mutex);
@@ -33,7 +33,7 @@ void	cpufunc2 (int id) {
 		var--;
 		// spin_unlock(&slock);
 		// unlock(mylock);
-		xsh_ps(0, NULL);
+		// xsh_ps(0, NULL);
 		signal(mutex);
 		MDELAY(3000);
 	}
@@ -44,7 +44,7 @@ process	main(void)
 	var = 0;
 	// slock = 0;
 	mylock = newlock();
-	int i;
+	// int i;
 	// cpu_run(1, cpufunc1);
 	mutex = semcreate(1);
 	
