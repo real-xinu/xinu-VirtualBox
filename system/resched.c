@@ -18,6 +18,8 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		return;
 	}
 
+	// if(getcid()==1){kprintf("core 1 rescheduling\n");};
+
 	/* Point to process table entry for the current (old) process */
 	ptold = &proctab[currpid];
 
@@ -28,6 +30,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		if (ptold->prprio > firstkey(readylist)) {
 			unlock(ptold->prlock);
 			unlock(readylock);
+			// if(getcid()==1){kprintf("still highest prio, returning\n");};
 			return;
 		}
 
