@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 
-char* null_stack[NCPU];		/* null process stack for each cpu */
+// char* null_stack[NCPU];		/* null process stack for each cpu */
 lid32 proctablock;			/* lock on the process table */
 
 /*------------------------------------------------------------------------
@@ -41,10 +41,8 @@ status procinit(void){
 		prptr = &proctab[i];
 		prptr->prstate = PR_CURR;
 		prptr->prprio = 0;
-		strncpy(prptr->prname, "prnullx", 8);
-		prptr->prname[6] = i + 0x30; /* convert i to string and append */
-		null_stack[i] = getstk(NULLSTK);
-		prptr->prstkbase = null_stack[i];
+		strncpy(prptr->prname, "prnull", 7);
+		prptr->prstkbase = getstk(NULLSTK);
 		prptr->prstklen = NULLSTK;
 		prptr->prstkptr = 0;
 		cputab[i].cpid = i;
