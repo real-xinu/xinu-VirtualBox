@@ -232,12 +232,8 @@ void	cpuhandler (void) {
  *------------------------------------------------------------------------
  */
 void resched_handler (void) {
-	// kprintf("resched_handler cpu %d\n", getcid());
-	// while(1);
-	// resched_cntl(DEFER_START);
 	lapic->eoi = 0;
 	resched();
-	// resched_cntl(DEFER_STOP);
 	return;
 }
 
@@ -246,10 +242,8 @@ void resched_handler (void) {
  *------------------------------------------------------------------------
  */
 void suspend_handler (void) {
-	// resched_cntl(DEFER_START);
 	lapic->eoi = 0;
 	suspend(currpid);
-	// resched_cntl(DEFER_STOP);
 	return;
 }
 
