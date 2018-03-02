@@ -8,9 +8,11 @@
  */
 void	prnull(void){
 	if(getcid() != 0){
-		kprintf("cpu %d prnull\n");
+		printf("cpu %d prnull\n", getcid());
 		resched();
 		enable();
 	}
-	while(TRUE);
+	while(TRUE){
+		// resched();
+	}
 }

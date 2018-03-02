@@ -45,8 +45,8 @@ status procinit(void){
 		prptr->prstkbase = getstk(NULLSTK);
 		prptr->prstklen = NULLSTK;
 		prptr->prstkptr = 0;
-		cputab[i].cpid = i;
-		prptr->prcpu = i;
+		cputab[i].cpid = CPU_NONE;
+		prptr->prcpu = CPU_NONE;
 	}
 
 	/* Initialize process sheduling info for main CPU */

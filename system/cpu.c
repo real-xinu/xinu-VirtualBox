@@ -41,9 +41,6 @@ void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
 
-	/* set resched and suspend ipi handlers */
-	// TODO:
-
 	for(i = 1; i < NCPU; i++){
 		cpuptr = &cputab[i];
 
@@ -237,10 +234,10 @@ void	cpuhandler (void) {
 void resched_handler (void) {
 	kprintf("resched_handler cpu %d\n", getcid());
 	while(1);
-	resched_cntl(DEFER_START);
+	// resched_cntl(DEFER_START);
 	resched();
 	lapic->eoi = 0;
-	resched_cntl(DEFER_STOP);
+	// resched_cntl(DEFER_STOP);
 	return;
 }
 
@@ -249,10 +246,10 @@ void resched_handler (void) {
  *------------------------------------------------------------------------
  */
 void suspend_handler (void) {
-	resched_cntl(DEFER_START);
+	// resched_cntl(DEFER_START);
 	suspend(currpid);
 	lapic->eoi = 0;
-	resched_cntl(DEFER_STOP);
+	// resched_cntl(DEFER_STOP);
 	return;
 }
 
@@ -311,8 +308,8 @@ status sendipi(
     cid32 core	/* core on which to generate interrupt */
     )
 {
-	lapic->icr_high = (core << 24) & 0xFF000000;
-	lapic->icr_low = 0x00004000 | ipi;
+	// lapic->icr_high = (core << 24) & 0xFF000000;
+	// lapic->icr_low = 0x00004000 | ipi;
     return OK;
 }
 
@@ -325,6 +322,6 @@ status bcastipi(
     int32 ipi	/* interrupt number to generate */
     )
 {
-	lapic->icr_low = 0x000C4000 | ipi;
+	// lapic->icr_low = 0x000C4000 | ipi;
     return OK;
 }

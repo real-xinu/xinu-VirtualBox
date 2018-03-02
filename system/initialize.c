@@ -127,6 +127,10 @@ local process	startup(void)
 	// 							ipaddr);
 	// }
 
+	/* System initialization complete, bring up auxiliary cores */
+
+	cpuinit();
+
 	/* Create a process to execute function main() */
 
 	resume(create((void *)main, INITSTK, INITPRIO,
