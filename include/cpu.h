@@ -5,7 +5,7 @@
 #define	CPU_STATE_DOWN	0
 #define	CPU_STATE_UP	1
 
-#define NCPU 4
+#define NCPU 2
 
 struct	cpuent {
 	/* startup/initialization variables */
