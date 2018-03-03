@@ -33,6 +33,11 @@ void	cpu_start2();
 void	cpu_start2_end();
 extern	struct	idt idt[];
 
+/* ipi dispatchers */
+void	cpudisp(void);
+void	resched_disp(void);
+void	suspend_disp(void);
+
 /*------------------------------------------------------------------------
  *  cpuinit  -  Initialize cpu entry information
  *------------------------------------------------------------------------
@@ -40,6 +45,10 @@ extern	struct	idt idt[];
 void cpuinit(void){
 	int32 i;				/* iterator over cores */
 	struct cpuent* cpuptr;	/* pointer to cpu entry */
+
+	/* set resched and suspend ipi handlers for cpu 0 */
+	set_ipi_handler(IPI_RESCHED, (uint32)resched_disp);
+	set_ipi_handler(IPI_SUSPEND, (uint32)suspend_disp);
 
 	for(i = 1; i < NCPU; i++){
 		cpuptr = &cputab[i];
@@ -60,8 +69,6 @@ void cpuinit(void){
 		sleep(1);
 	}
 }
-
-
 
 /*------------------------------------------------------------------------
  * cpu_run  -  Execute a function on the specified CPU
@@ -136,10 +143,6 @@ void	cpu_run (
 	}
 }
 
-void	cpudisp(void);
-void	resched_disp(void);
-void	suspend_disp(void);
-
 /*------------------------------------------------------------------------
  * cpu_init  -  Initialize data structures for a CPU
  *------------------------------------------------------------------------
@@ -161,24 +164,8 @@ void	cpu_init (void) {
 	pidt->igd_hoffset = (uint32)cpudisp >> 16;
 
 	/* set resched and suspend ipi handlers */
-
-	pidt = &idt[IPI_RESCHED];
-	pidt->igd_loffset = (uint32)resched_disp;
-	pidt->igd_segsel = 0x8;
-	pidt->igd_mbz = 0;
-	pidt->igd_type = IGDT_TRAPG;
-	pidt->igd_dpl = 0;
-	pidt->igd_present = 1;
-	pidt->igd_hoffset = (uint32)resched_disp >> 16;
-
-	pidt = &idt[IPI_SUSPEND];
-	pidt->igd_loffset = (uint32)suspend_disp;
-	pidt->igd_segsel = 0x8;
-	pidt->igd_mbz = 0;
-	pidt->igd_type = IGDT_TRAPG;
-	pidt->igd_dpl = 0;
-	pidt->igd_present = 1;
-	pidt->igd_hoffset = (uint32)suspend_disp >> 16;
+	set_ipi_handler(IPI_RESCHED, (uint32)resched_disp);
+	set_ipi_handler(IPI_SUSPEND, (uint32)suspend_disp);
 
 	/* Load the IDT */
 
@@ -317,5 +304,26 @@ status bcastipi(
     )
 {
 	lapic->icr_low = 0x000C4000 | ipi;
+    return OK;
+}
+
+/*------------------------------------------------------------------------
+ *  set_ipi_handler  -  Set ipi handler for inter-processor interrupt
+ *------------------------------------------------------------------------
+ */
+status set_ipi_handler(
+    uint32 ipi,		/* ipi number */
+    uint32 handler	/* handler for ipi */
+    )
+{
+	struct	idt	*pidt;
+	pidt = &idt[ipi];
+	pidt->igd_loffset = handler;
+	pidt->igd_segsel = 0x8;
+	pidt->igd_mbz = 0;
+	pidt->igd_type = IGDT_TRAPG;
+	pidt->igd_dpl = 0;
+	pidt->igd_present = 1;
+	pidt->igd_hoffset = handler >> 16;
     return OK;
 }

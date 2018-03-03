@@ -50,6 +50,7 @@ extern	void	cpuinit(void);
 extern	cid32	getcid(void);
 extern	status	sendipi(int32 sgi, cid32 core);
 extern	status	bcastipi(int32 sgi);
+extern	status	set_ipi_handler(uint32, uint32);
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
