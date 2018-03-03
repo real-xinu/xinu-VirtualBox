@@ -41,28 +41,28 @@ void	cpufunc2 (int id) {
 
 process	main(void)
 {
-	var = 0;
+	// var = 0;
 	// slock = 0;
-	mylock = newlock();
+	// mylock = newlock();
 	// int i;
 	// cpu_run(1, cpufunc1);
-	mutex = semcreate(1);
+	// mutex = semcreate(1);
 	
-	resched_cntl(DEFER_START);
-	resume(create(cpufunc2, 4096, 19, "cpudaemon1", 1, 1));
+	// wait(mutex);
+	// resched_cntl(DEFER_START);
+	// resume(create(cpufunc2, 4096, 19, "cpudaemon1", 1, 1));
 	// sleep(1);
-	resume(create(cpufunc2, 4096, 19, "cpudaemon2", 1, 2));
+	// resume(create(cpufunc2, 4096, 19, "cpudaemon2", 1, 2));
 	// sleep(1);
-	resume(create(cpufunc2, 4096, 19, "cpudaemon3", 1, 3));
-	resched_cntl(DEFER_STOP);
+	// resume(create(cpufunc2, 4096, 19, "cpudaemon3", 1, 3));
+	// resched_cntl(DEFER_STOP);
 
 
 	/* Run the Xinu shell */
 
 	recvclr();
-	wait(mutex);
 	resume(create(shell, 8192, 50, "shell", 1, CONSOLE));
-	signal(mutex);
+	// signal(mutex);
 
 	/* Wait for shell to exit and recreate it */
 
