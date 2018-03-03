@@ -66,7 +66,7 @@ void cpuinit(void){
 
 		/* Set auxiliary cores running null process */
 		cpu_run(i, prnull);
-		sleep(1);
+		sleepms(20);
 	}
 }
 
@@ -166,6 +166,7 @@ void	cpu_init (void) {
 	/* set resched and suspend ipi handlers */
 	set_ipi_handler(IPI_RESCHED, (uint32)resched_disp);
 	set_ipi_handler(IPI_SUSPEND, (uint32)suspend_disp);
+	set_ipi_handler(IRQBASE, (uint32)clkdisp);
 
 	/* Load the IDT */
 
