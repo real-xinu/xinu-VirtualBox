@@ -2,6 +2,8 @@
 
 #include <xinu.h>
 
+lid32 buftablock;
+
 /*------------------------------------------------------------------------
  *  mkbufpool  -  Allocate memory for a buffer pool and link the buffers
  *------------------------------------------------------------------------
@@ -16,30 +18,34 @@ bpid32	mkbufpool(
 	struct	bpentry	*bpptr;		/* Pointer to entry in buftab	*/
 	char	*buf;			/* Pointer to memory for buffer	*/
 
-	mask = disable();
+	mask = xsec_beg(buftablock);
+
 	if (bufsiz<BP_MINB || bufsiz>BP_MAXB
 	    || numbufs<1 || numbufs>BP_MAXN
 	    || nbpools >= NBPOOLS) {
-		restore(mask);
+		xsec_end(mask, buftablock);
 		return (bpid32)SYSERR;
 	}
+
 	/* Round request to a multiple of 4 bytes */
 
 	bufsiz = ( (bufsiz + 3) & (~3) );
 
 	buf = (char *)getmem( numbufs * (bufsiz+sizeof(bpid32)) );
 	if ((int32)buf == SYSERR) {
-		restore(mask);
+		xsec_end(mask, buftablock);
 		return (bpid32)SYSERR;
 	}
 	poolid = nbpools++;
 	bpptr = &buftab[poolid];
 	bpptr->bpnext = (struct bpentry *)buf;
 	bpptr->bpsize = bufsiz;
-	if ( (bpptr->bpsem = semcreate(numbufs)) == SYSERR) {
+	if ( (bpptr->bpsem = semcreate(numbufs)) == SYSERR ||
+		 (bpptr->bplock = newlock()) == SYSERR
+		) {
 		freemem(buf, numbufs * (bufsiz+sizeof(bpid32)) );
 		nbpools--;
-		restore(mask);
+		xsec_end(mask, buftablock);
 		return (bpid32)SYSERR;
 	}
 	bufsiz+=sizeof(bpid32);
@@ -50,6 +56,7 @@ bpid32	mkbufpool(
 	}
 	bpptr = (struct bpentry *)buf;
 	bpptr->bpnext = (struct bpentry *)NULL;
-	restore(mask);
+
+	xsec_end(mask, buftablock);
 	return poolid;
 }
