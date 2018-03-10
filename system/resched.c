@@ -21,8 +21,8 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	/* Point to process table entry for the current (old) process */
 	ptold = &proctab[currpid];
 
-	lock(readylock);
-	lock(ptold->prlock);
+	lock(readylock); 		/* unlocked in ctxsw_ret */
+	lock(ptold->prlock);	/* unlocked in ctxsw_ret */
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {
@@ -41,7 +41,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	prevpid = currpid;						/* record previous process		*/
 	currpid = dequeue(readylist);			/* get and record new process	*/
 	ptnew = &proctab[currpid];		
-	lock(ptnew->prlock);
+	lock(ptnew->prlock);					/* unlocked in ctxsw_ret */
 	ptnew->prstate = PR_CURR;				/* set new process as current	*/
 	cputab[getcid()].preempt = QUANTUM;		/* Reset time slice for process	*/
 

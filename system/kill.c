@@ -52,7 +52,8 @@ syscall	kill(
 	case PR_SLEEP:
 	case PR_RECTIM:
 		unsleep(pid);
-		prptr->prstate = PR_DEAD;
+		freestk(prptr->prstkbase, prptr->prstklen);
+		prptr->prstate = PR_FREE;
 		break;
 
 	case PR_WAIT: 
@@ -61,7 +62,9 @@ syscall	kill(
 
 	case PR_READY:
 		getitem(pid);		/* Remove from queue */
-		/* Fall through */
+		freestk(prptr->prstkbase, prptr->prstklen);
+		prptr->prstate = PR_FREE;
+		break;
 
 	default:
 		prptr->prstate = PR_DEAD;
