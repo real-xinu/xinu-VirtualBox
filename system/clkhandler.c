@@ -35,7 +35,7 @@ void	clkhandler()
 		}
 
 		/* Handle sleeping processes if any exist */
-
+		resched_cntl(DEFER_START);
 		lock(sleepqlock);
 
 		if(!isempty(sleepq)) {
@@ -49,6 +49,7 @@ void	clkhandler()
 		}
 
 		unlock(sleepqlock);
+		resched_cntl(DEFER_STOP);
 	}
 
 	/* Decrement the preemption counter, and reschedule when the */
