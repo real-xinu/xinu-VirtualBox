@@ -11,10 +11,10 @@
  * in order to prevent false sharing.
  */
 struct lentry {
-	volatile int32	lock;		/* Actual lock word used by hardware */
-	cid32	lowner;				/* id of cpu that currently owns lock */
-	uint32	lcount;				/* count locks by lowner */
-	int32	lpad[13];			/* padding to reach size of ERG */
+	volatile int32	lock;	/* Actual lock word used by hardware 	*/
+	cid32	lowner;		/* id of cpu that currently owns lock 	*/
+	uint32	lcount;		/* count locks by lowner 		*/
+	int32	lpad[13];	/* padding to reach size of ERG 	*/
 };
 
 extern	struct	lentry	locktab[];	/* lock table */
