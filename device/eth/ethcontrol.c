@@ -16,20 +16,25 @@ devcall	ethcontrol(
 	struct	ethcblk	*ethptr; 	/* pointer to control block	*/
 	uint32 rar_low, rar_high;
 	uint8 *addr;
+	intmask mask;
 
 
 	ethptr = &ethertab[devptr->dvminor];
+
 
 	switch (func) {
 
 		/* Get MAC address */
 
 		case ETH_CTRL_GET_MAC:
+			mask = xsec_beg(ethptr->ethlock);
 			memcpy((byte *)arg1, ethptr->devAddress, 
 					ETH_ADDR_LEN);
+			xsec_end(mask, ethptr->ethlock);
 			break;
 
 		case ETH_CTRL_SET_MAC:
+			mask = xsec_beg(ethptr->ethlock);
 			addr = (uint8 *)arg1;
 			rar_low = ((uint32) addr[0] |
 				  ((uint32) addr[1] << 8) |
@@ -48,7 +53,7 @@ devcall	ethcontrol(
 			eth_io_writel(ethptr->iobase, E1000_RAH(arg2), 
 					rar_high);
 			eth_io_flush(ethptr->iobase);
-			
+			xsec_end(mask, ethptr->ethlock);
 			break;
 
 		default:
@@ -66,9 +71,11 @@ void ethIrqDisable(
 	struct 	ethcblk	*ethptr
 	)
 {
+	intmask mask = xsec_beg(ethptr->ethlock);
 	eth_io_writel(ethptr->iobase, E1000_IMC, ~0);
 
 	eth_io_flush(ethptr->iobase);
+	xsec_end(mask, ethptr->ethlock);
 }
 
 /*------------------------------------------------------------------------
@@ -79,7 +86,9 @@ void ethIrqEnable(
 	struct 	ethcblk	*ethptr
 	)
 {
+	intmask mask = xsec_beg(ethptr->ethlock);
 	eth_io_writel(ethptr->iobase, E1000_IMS, E1000_IMS_ENABLE_MASK);
 
 	eth_io_flush(ethptr->iobase);
+	xsec_end(mask, ethptr->ethlock);
 }

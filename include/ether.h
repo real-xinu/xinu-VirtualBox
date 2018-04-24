@@ -101,7 +101,8 @@ struct	ethcblk	{
 
 	int16 	ed_mcset;       /* Nonzero => multicast reception set   */
 	int16 	ed_mcc;	 	/* Count of multicast addresses		*/
-    	Eaddr   ed_mca[ETH_NUM_MCAST];/* Array of multicast addrs 	*/
+    Eaddr   ed_mca[ETH_NUM_MCAST];/* Array of multicast addrs 	*/
+	lid32	ethlock;	/* Lock on ethernet control block */
 };
 
 extern	struct	ethcblk	ethertab[];	/* Array of control blocks      */
