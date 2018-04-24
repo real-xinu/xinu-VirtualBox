@@ -51,5 +51,9 @@ devcall	ethinit (
 
 	ethptr->state = ETH_STATE_UP;
 
+	/* Initialize lock for parallel access */
+	
+	ethptr->ethlock = newlock();
+
 	return OK;
 }
