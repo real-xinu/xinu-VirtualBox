@@ -31,7 +31,7 @@ intmask xsec_beg(
  */
  status xsec_end(
   		intmask mask,	/* saved interrupt mask to restore */
- 		lid32 lid		/* id of spinlock to lock */
+ 		lid32 lid		/* id of spinlock to unlock */
   		){
 
 	/* Undo operations in reverse order of xsec_beg */
