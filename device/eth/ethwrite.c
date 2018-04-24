@@ -17,6 +17,7 @@ devcall	ethwrite(
 	char 	*pktptr; 		/* ptr used during packet copy  */
 	uint32	tail;			/* index of ring buffer for pkt	*/
 	uint32 	tdt;
+	intmask mask;
 
 	ethptr = &ethertab[devptr->dvminor];
 
@@ -38,6 +39,10 @@ devcall	ethwrite(
 	/* Wait for a free ring slot */
 
 	wait(ethptr->osem);
+
+	/* protect parallel access to eth control block */
+
+	mask = xsec_beg(ethptr->ethlock);
 
 	/* Find the tail of the ring to insert packet */
 	
@@ -69,6 +74,8 @@ devcall	ethwrite(
 	/* 	descriptor 						*/
 	
 	ethptr->txTail = (ethptr->txTail + 1) % ethptr->txRingSize;
+
+	xsec_end(mask, ethptr->ethlock);
 
 	return len;
 }

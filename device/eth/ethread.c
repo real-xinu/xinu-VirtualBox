@@ -20,6 +20,7 @@ devcall	ethread(
 	uint32	length;			/* packet length		*/
 	int32 	retval;
 	uint32 	rdt;
+	intmask mask;
 
 	ethptr = &ethertab[devptr->dvminor];
 
@@ -31,6 +32,10 @@ devcall	ethread(
 	/* Wait for a packet to arrive */
 
 	wait(ethptr->isem);
+
+	/* protect parallel access to eth control block */
+
+	mask = xsec_beg(ethptr->ethlock);
 
 	/* Find out where to pick up the packet */
 
@@ -69,6 +74,8 @@ devcall	ethread(
 	/* Advance the head pointing to the next ring descriptor which 	*/
 	/*  	will be ready to be picked up 				*/
 	ethptr->rxHead = (ethptr->rxHead + 1) % ethptr->rxRingSize;
+
+	xsec_end(mask, ethptr->ethlock);
 
 	return retval;
 }
