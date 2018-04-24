@@ -15,6 +15,8 @@ local 	void 	eth_rxPackets(
 	uint32	status;			/* status of ring descriptor 	*/
 	int numdesc; 			/* num. of descriptor reclaimed	*/
 
+	intmask mask = xsec_beg(ethptr->ethlock);	/* multicore protection */
+
 	for (numdesc = 0; numdesc < ethptr->rxRingSize; numdesc++) {
 
 		/* Insert new arrived packet to the tail */
@@ -33,6 +35,8 @@ local 	void 	eth_rxPackets(
 
 	signaln(ethptr->isem, numdesc);
 
+	xsec_end(mask, ethptr->ethlock);
+
 	return;
 }
 
@@ -48,6 +52,9 @@ local 	void 	eth_txPackets(
 	uint32 	head; 			/* pos to reclaim descriptor	*/
 	char 	*pktptr; 		/* ptr used during packet copy  */
 	int 	numdesc; 		/* num. of descriptor reclaimed	*/
+
+	/* protect parallel access to eth control block */
+	intmask mask = xsec_beg(ethptr->ethlock);	
 
 	for (numdesc = 0; numdesc < ethptr->txRingSize; numdesc++) {
 		head = ethptr->txHead;
@@ -70,6 +77,7 @@ local 	void 	eth_txPackets(
 
 	signaln(ethptr->osem, numdesc);
 
+	xsec_end(mask, ethptr->ethlock);
 	return;
 }
 
@@ -83,6 +91,7 @@ interrupt ethhandler(void)
 	uint32	status;
 	struct  dentry  *devptr;        /* address of device control blk*/
 	struct 	ethcblk	*ethptr;	/* ptr to control block		*/
+	intmask mask;
 
 	/* Initialize structure pointers */
 
@@ -92,12 +101,16 @@ interrupt ethhandler(void)
 
 	ethptr = &ethertab[devptr->dvminor];
 
+	/* protect parallel access to eth control block */
+	
+	mask = xsec_beg(ethptr->ethlock);
+
 	/* Invoke the device-specific interrupt handler */
 
 	/* Disable device interrupt */
 
 	ethIrqDisable(ethptr);
-
+	
 	/* Obtain status bits from device */
 
 	status = eth_io_readl(ethptr->iobase, E1000_ICR);
@@ -109,7 +122,6 @@ interrupt ethhandler(void)
 		return;
 	}
 
-	resched_cntl(DEFER_START);
 
 	if (status & E1000_ICR_LSC) {
 	}
@@ -128,7 +140,7 @@ interrupt ethhandler(void)
 
 	ethIrqEnable(ethptr);
 	
-	resched_cntl(DEFER_STOP);
+	xsec_end(mask, ethptr->ethlock);
 
 	return;
 }
