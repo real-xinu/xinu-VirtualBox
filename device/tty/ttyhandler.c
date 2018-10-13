@@ -51,7 +51,7 @@ void ttyhandler(void) {
 
 		resched_cntl(DEFER_START);
 
-		/* While chars avail. in UART buffer, call ttyinter_in	*/
+		/* While chars avail. in UART buffer, call ttyhandle_in	*/
 
 		while ( (io_inb(csrptr->lsr) & UART_LSR_DR) != 0) {
 			ttyhandle_in(typtr, csrptr);
