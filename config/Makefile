@@ -10,6 +10,7 @@ YACC	= ${COMPILER_ROOT}bison -y	# Flag enables yacc-compatible filenames
 CFLAGS	= 
 LFLAGS	= -lfl
 
+
 #
 # Name of the configuration program
 #
@@ -25,8 +26,11 @@ lex.yy.c:	config.l
 		$(LEX) config.l
 
 y.tab.c:	config.y
+		@(if test "x$$LOGNAME" = "xxinu"; then			\
+		       echo "extern	size_t	yyleng;";		\
+		  else echo "extern	int	yyleng;"; fi) > .yyleng
 		$(YACC) config.y
-
+	
 clean:
 		rm -f config lex.yy.c y.tab.c
 

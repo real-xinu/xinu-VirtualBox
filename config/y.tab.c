@@ -69,20 +69,12 @@
 #include <string.h>
 #include <ctype.h>
 
+/* Avoid warnings for undeclared items */
+
 extern	char	*yytext;
-/*
-   Work-around for the type conflict that results from unmatched versions
-   of flex and bison (lex and yacc).  The idea is to force the new flex
-   style so the output file (lex.yy.c) treats yyleng as an int (as was
-   done by oldest lex versions) instead of a size_t.  We override the
-   new flex typedef of yy_size_t.
-*/
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef int yy_size_t;
-#endif
-/* End work-around */
-extern	int	yyleng;
+#include ".yyleng"
+extern	int	yylex(void);
+
 
 
 /********************************************************************************/
@@ -182,7 +174,7 @@ void	yyerror(char *);
 
 
 
-#line 186 "y.tab.c" /* yacc.c:339  */
+#line 178 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -274,7 +266,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 278 "y.tab.c" /* yacc.c:358  */
+#line 270 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -573,10 +565,10 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   141,   141,   150,   151,   154,   157,   160,   161,   164,
-     167,   170,   171,   174,   175,   176,   177,   178,   179,   180,
-     181,   182,   183,   184,   185,   188,   191,   201,   202,   205,
-     208,   211,   214,   217,   220,   223
+       0,   133,   133,   142,   143,   146,   149,   152,   153,   156,
+     159,   162,   163,   166,   167,   168,   169,   170,   171,   172,
+     173,   174,   175,   176,   177,   180,   183,   193,   194,   197,
+     200,   203,   206,   209,   212,   215
 };
 #endif
 
@@ -1377,139 +1369,139 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 150 "config.y" /* yacc.c:1646  */
+#line 142 "config.y" /* yacc.c:1646  */
     { doing = "device definitions"; }
-#line 1383 "y.tab.c" /* yacc.c:1646  */
+#line 1375 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 157 "config.y" /* yacc.c:1646  */
+#line 149 "config.y" /* yacc.c:1646  */
     { (yyval) = newtype(yytext); }
-#line 1389 "y.tab.c" /* yacc.c:1646  */
+#line 1381 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 164 "config.y" /* yacc.c:1646  */
+#line 156 "config.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[0]); }
-#line 1395 "y.tab.c" /* yacc.c:1646  */
+#line 1387 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 167 "config.y" /* yacc.c:1646  */
+#line 159 "config.y" /* yacc.c:1646  */
     { (yyval) = addton(yytext); }
-#line 1401 "y.tab.c" /* yacc.c:1646  */
+#line 1393 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 174 "config.y" /* yacc.c:1646  */
+#line 166 "config.y" /* yacc.c:1646  */
     { addattr(CSR,    (yyvsp[0]));	}
-#line 1407 "y.tab.c" /* yacc.c:1646  */
+#line 1399 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 175 "config.y" /* yacc.c:1646  */
+#line 167 "config.y" /* yacc.c:1646  */
     { addattr(IRQ,    (yyvsp[0]));	}
-#line 1413 "y.tab.c" /* yacc.c:1646  */
+#line 1405 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 176 "config.y" /* yacc.c:1646  */
+#line 168 "config.y" /* yacc.c:1646  */
     { addattr(INTR,    0);	}
-#line 1419 "y.tab.c" /* yacc.c:1646  */
+#line 1411 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 177 "config.y" /* yacc.c:1646  */
+#line 169 "config.y" /* yacc.c:1646  */
     { addattr(OPEN,    0);	}
-#line 1425 "y.tab.c" /* yacc.c:1646  */
+#line 1417 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 178 "config.y" /* yacc.c:1646  */
+#line 170 "config.y" /* yacc.c:1646  */
     { addattr(CLOSE,   0);	}
-#line 1431 "y.tab.c" /* yacc.c:1646  */
+#line 1423 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 179 "config.y" /* yacc.c:1646  */
+#line 171 "config.y" /* yacc.c:1646  */
     { addattr(INIT,    0);	}
-#line 1437 "y.tab.c" /* yacc.c:1646  */
+#line 1429 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 180 "config.y" /* yacc.c:1646  */
+#line 172 "config.y" /* yacc.c:1646  */
     { addattr(GETC,    0);	}
-#line 1443 "y.tab.c" /* yacc.c:1646  */
+#line 1435 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 181 "config.y" /* yacc.c:1646  */
+#line 173 "config.y" /* yacc.c:1646  */
     { addattr(PUTC,    0);	}
-#line 1449 "y.tab.c" /* yacc.c:1646  */
+#line 1441 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 182 "config.y" /* yacc.c:1646  */
+#line 174 "config.y" /* yacc.c:1646  */
     { addattr(READ,    0);	}
-#line 1455 "y.tab.c" /* yacc.c:1646  */
+#line 1447 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 183 "config.y" /* yacc.c:1646  */
+#line 175 "config.y" /* yacc.c:1646  */
     { addattr(WRITE,   0);	}
-#line 1461 "y.tab.c" /* yacc.c:1646  */
+#line 1453 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 184 "config.y" /* yacc.c:1646  */
+#line 176 "config.y" /* yacc.c:1646  */
     { addattr(SEEK,    0);	}
-#line 1467 "y.tab.c" /* yacc.c:1646  */
+#line 1459 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 185 "config.y" /* yacc.c:1646  */
+#line 177 "config.y" /* yacc.c:1646  */
     { addattr(CONTROL, 0);	}
-#line 1473 "y.tab.c" /* yacc.c:1646  */
+#line 1465 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 188 "config.y" /* yacc.c:1646  */
+#line 180 "config.y" /* yacc.c:1646  */
     { (yyval) = 0; getattrid(yytext); }
-#line 1479 "y.tab.c" /* yacc.c:1646  */
+#line 1471 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 191 "config.y" /* yacc.c:1646  */
+#line 183 "config.y" /* yacc.c:1646  */
     { (yyval) = config_atoi(yytext, yyleng); }
-#line 1485 "y.tab.c" /* yacc.c:1646  */
+#line 1477 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 201 "config.y" /* yacc.c:1646  */
+#line 193 "config.y" /* yacc.c:1646  */
     { doing = "interface types"; }
-#line 1491 "y.tab.c" /* yacc.c:1646  */
+#line 1483 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 211 "config.y" /* yacc.c:1646  */
+#line 203 "config.y" /* yacc.c:1646  */
     { newdev(yytext); }
-#line 1497 "y.tab.c" /* yacc.c:1646  */
+#line 1489 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 217 "config.y" /* yacc.c:1646  */
+#line 209 "config.y" /* yacc.c:1646  */
     { devisid(yytext); }
-#line 1503 "y.tab.c" /* yacc.c:1646  */
+#line 1495 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 223 "config.y" /* yacc.c:1646  */
+#line 215 "config.y" /* yacc.c:1646  */
     { devonid(yytext); }
-#line 1509 "y.tab.c" /* yacc.c:1646  */
+#line 1501 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1513 "y.tab.c" /* yacc.c:1646  */
+#line 1505 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1737,7 +1729,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 226 "config.y" /* yacc.c:1906  */
+#line 218 "config.y" /* yacc.c:1906  */
 
 
 #include "lex.yy.c"
