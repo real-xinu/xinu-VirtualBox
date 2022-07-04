@@ -75,9 +75,6 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	IRQ_ATH_MISC IRQ_HW4	/* Misc. IRQ is wired to hardware 4	*/
 #define CLKFREQ      200000000	/* 200 MHz clock			*/
 
-#define	LF_DISK_DEV	RAM0
-
 #ifndef	ETHER0
 #define	ETHER0	0
 #endif
-

@@ -9,7 +9,7 @@
 devcall	ethwrite(
 	struct	dentry	*devptr, 	/* entry in device switch table	*/
 	void	*buf,			/* buffer that holds a packet	*/
-	uint32	len			/* length of buffer		*/
+	int32	len			/* length of buffer		*/
 	)
 {
 	struct	ethcblk	*ethptr; 	/* ptr to entry in ethertab 	*/

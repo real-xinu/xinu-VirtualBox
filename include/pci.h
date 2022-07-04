@@ -72,9 +72,9 @@ extern struct ether     dev_eth;
 extern struct eth_pd*   eth_txring;
 extern struct eth_pd*   eth_rxring;
 
-extern    int pci_bios_read_config_byte(uint32, int, unsigned char *);
-extern    int pci_bios_read_config_word(uint32, int, uint16 *);
-extern    int pci_bios_read_config_dword(uint32, int, uint32 *);
-extern    int pci_bios_write_config_byte(uint32, int, unsigned char);
-extern    int pci_bios_write_config_word(uint32, int, uint16);
-extern    int pci_bios_write_config_dword(uint32, int, uint32);
+extern	int pci_bios_read_config_byte(uint32, int, unsigned char *);
+extern	int pci_bios_read_config_word(uint32, int, uint16 *);
+extern	int pci_bios_read_config_dword(uint32, int, uint32 *);
+extern	int pci_bios_write_config_byte(uint32, int, unsigned char);
+extern	int pci_bios_write_config_word(uint32, int, uint16);
+extern	int pci_bios_write_config_dword(uint32, int, uint32);
