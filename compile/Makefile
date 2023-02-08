@@ -111,7 +111,7 @@ xinu:	Makefile rebuild $(BLDDIRS) $(DEFSFILE) $(DEPSFILE) $(CONFH) $(CONFC) $(LD
 	@echo;echo 'Loading object files to produce GRUB bootable xinu'
 	@$(LD) $(LDFLAGS) $(LD_LIST) -o $(XINU)
 	@echo Copying xinu.elf to xinu.boot in the TFTP directory.
-	#@$(ECHOxinu00) cp xinu.elf /srv/tftp/xinu.boot
+	@$(ECHOxinu00) cp xinu.elf /srv/tftp/xinu.boot
 	@echo
 	
 

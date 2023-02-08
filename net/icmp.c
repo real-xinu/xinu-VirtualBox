@@ -31,15 +31,16 @@ void	icmp_in(
 	int32	slot;			/* Slot in ICMP table		*/
 	struct	icmpentry *icmptr;	/* Pointer to icmptab entry	*/
 	struct	netpacket *replypkt;	/* Pointer to reply packet	*/
-
-	mask = disable();
+	struct  procent *prptr;
+	prptr = &proctab[currpid];
+	mask = xsec_beg(prptr->prlock);
 
 	/* Discard all ICMP messages except ping */
 
 	if ( (pkt->net_ictype != ICMP_ECHOREPLY) &&
 	     (pkt->net_ictype != ICMP_ECHOREQST)  )	{
 		freebuf((char *)pkt);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return;
 	}
 
@@ -57,7 +58,7 @@ void	icmp_in(
 			ip_enqueue(replypkt);
 		}
 		freebuf((char *)pkt);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return;
 	}
 
@@ -66,7 +67,7 @@ void	icmp_in(
 	slot = pkt->net_icident;
 	if ( (slot < 0) || (slot >= ICMP_SLOTS) ) {
 		freebuf((char *)pkt);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return;
 	}
 
@@ -77,7 +78,7 @@ void	icmp_in(
 	if ( (icmptr->icstate == ICMP_FREE) ||
 	     (pkt->net_ipsrc != icmptr->icremip) ) {
 		freebuf((char *)pkt);	/* discard packet */
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return;
 	}
 
@@ -92,7 +93,8 @@ void	icmp_in(
 		icmptr->icstate = ICMP_USED;
 		send (icmptr->icpid, OK);
 	}
-	restore(mask);
+
+	xsec_end(mask, prptr->prlock);
 	return;
 }
 
@@ -108,8 +110,11 @@ int32	icmp_register (
 	int32	i;			/* Index into icmptab		*/
 	int32	freeslot;		/* Index of slot to use		*/
 	struct	icmpentry *icmptr;	/* Pointer to icmptab entry	*/
+        struct  procent *prptr;
 
-	mask = disable();
+	prptr = &proctab[currpid];
+
+	mask = xsec_beg(prptr->prlock);
 
 	/* Find a free slot in the table */
 
@@ -121,13 +126,12 @@ int32	icmp_register (
 				freeslot = i;
 			}
 		} else if (icmptr->icremip == remip) {
-			restore(mask);
+			xsec_end(mask, prptr->prlock);
 			return SYSERR;	/* Already registered */
 		}
 	}
 	if (freeslot == -1) {  /* No free entries in table */
-
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
@@ -139,7 +143,7 @@ int32	icmp_register (
 	icmptr->iccount = 0;
 	icmptr->ichead = icmptr->ictail = 0;
 	icmptr->icpid = -1;
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return freeslot;
 }
 
@@ -161,6 +165,7 @@ int32	icmp_recv (
 	int32	datalen;		/* Length of ICMP data area	*/
 	char	*icdataptr;		/* Pointer to icmp data		*/
 	int32	i;			/* Counter for data copy	*/
+	struct  procent *prptr;
 
 	/* Verify that the ID is valid */
 
@@ -170,27 +175,28 @@ int32	icmp_recv (
 
 	/* Insure only one process touches the table at a time */
 
-	mask = disable();
+	prptr = &proctab[currpid];
+
+	mask = xsec_beg(prptr->prlock);
 
 	/* Verify that the ID has been registered and is idle */
 
 	icmptr = &icmptab[icmpid];
 	if (icmptr->icstate != ICMP_USED) {
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
 	if (icmptr->iccount == 0) {		/* No packet is waiting */
 		icmptr->icstate = ICMP_RECV;
 		icmptr->icpid = currpid;
+		xsec_end(mask, prptr->prlock);
 		msg = recvclr();
 		msg = recvtime(timeout);	/* Wait for a reply */
 		icmptr->icstate = ICMP_USED;
 		if (msg == TIMEOUT) {
-			restore(mask);
 			return TIMEOUT;
 		} else if (msg != OK) {
-			restore(mask);
 			return SYSERR;
 		}
 	}
@@ -214,7 +220,7 @@ int32	icmp_recv (
 		*buff++ = *icdataptr++;
 	}
 	freebuf((char *)pkt);
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return i;
 }
 
@@ -234,20 +240,24 @@ status	icmp_send (
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	netpacket *pkt;		/* Packet returned by icmp_mkpkt*/
 	int32	retval;			/* Value returned by ip_send	*/
+        struct  procent *prptr;
 
-	mask = disable();
+	prptr = &proctab[currpid];
+
+	mask = xsec_beg(prptr->prlock);
 
 	/* Form a packet to send */
 
 	pkt = icmp_mkpkt(remip, type, ident, seq, buf, len);
 	if ((int32)pkt == SYSERR) {
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
 	/* Send the packet */
 
 	retval = ip_send(pkt);
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return retval;
 }
 
@@ -316,18 +326,21 @@ status	icmp_release (
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	icmpentry *icmptr;	/* Pointer to icmptab entry	*/
 	struct	netpacket *pkt;		/* Pointer to packet		*/
+        struct  procent *prptr;
 
-	mask = disable();
+	prptr = &proctab[currpid];
+
+	mask = xsec_beg(prptr->prlock);
 
 	/* Check arg and insure entry in table is in use */
 
 	if ( (icmpid < 0) || (icmpid >= ICMP_SLOTS) ) {
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 	icmptr = &icmptab[icmpid];
 	if (icmptr->icstate != ICMP_USED) {
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
@@ -348,7 +361,7 @@ status	icmp_release (
 
 	icmptr->icstate = ICMP_FREE;
 	resched_cntl(DEFER_STOP);
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return OK;
 }
 

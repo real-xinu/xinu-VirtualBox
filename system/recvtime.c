@@ -36,6 +36,7 @@ umsg32	recvtime(
 			return SYSERR;
 		}
 		prptr->prstate = PR_RECTIM;
+		xsec_end(mask, prptr->prlock);
 		resched();
 	}
 
@@ -48,6 +49,6 @@ umsg32	recvtime(
 		msg = TIMEOUT;
 	}
 
-	xsec_endn(mask, 2, sleepqlock, prptr->prlock);
+	xsec_end(mask, sleepqlock);
 	return msg;
 }

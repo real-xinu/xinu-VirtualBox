@@ -108,8 +108,10 @@ status	ip_send(
 	uint32	dest;			/* Destination of the datagram	*/
 	int32	retval;			/* Return value from functions	*/
 	uint32	nxthop;			/* Next-hop address		*/
+	struct  procent *prptr;
+	prptr = &proctab[currpid];
 
-	mask = disable();
+	mask = xsec_beg(prptr->prlock);
 
 	/* Pick up the IP destination address from the packet */
 
@@ -119,7 +121,7 @@ status	ip_send(
 
 	if ((dest&0xff000000) == 0x7f000000) {
 		ip_local(pktptr);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return OK;
 	}
 
@@ -127,7 +129,7 @@ status	ip_send(
 
 	if (dest == NetData.ipucast) {
 		ip_local(pktptr);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return OK;
 	}
 
@@ -138,7 +140,7 @@ status	ip_send(
 		memcpy(pktptr->net_ethdst, NetData.ethbcast,
 							ETH_ADDR_LEN);
 		retval = ip_out(pktptr);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return retval;
 	}
 
@@ -160,6 +162,7 @@ status	ip_send(
 
 	if (nxthop == 0) {	/* Dest. invalid or no default route	*/
 		freebuf((char *)pktptr);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
@@ -168,13 +171,14 @@ status	ip_send(
 	retval = arp_resolve(nxthop, pktptr->net_ethdst);
 	if (retval != OK) {
 		freebuf((char *)pktptr);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 
 	/* Send the packet */
 
 	retval = ip_out(pktptr);
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return retval;
 }
 
@@ -442,10 +446,11 @@ status	ip_enqueue(
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	iqentry	*iptr;		/* Ptr. to network output queue	*/
+        struct  procent *prptr;
+        prptr = &proctab[currpid];
 
 	/* Ensure only one process accesses output queue at a time */
-
-	mask = disable();
+	mask = xsec_beg(prptr->prlock);
 
 	/* Enqueue packet on network output queue */
 
@@ -453,7 +458,7 @@ status	ip_enqueue(
 	if (semcount(iptr->iqsem) >= IP_OQSIZ) {
 		kprintf("ipout: output queue overflow\n");
 		freebuf((char *)pktptr);
-		restore(mask);
+		xsec_end(mask, prptr->prlock);
 		return SYSERR;
 	}
 	iptr->iqbuf[iptr->iqtail++] = pktptr;
@@ -461,6 +466,6 @@ status	ip_enqueue(
 		iptr->iqtail = 0;
 	}
 	signal(iptr->iqsem);
-	restore(mask);
+	xsec_end(mask, prptr->prlock);
 	return OK;	
 }

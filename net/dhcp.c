@@ -278,6 +278,7 @@ uint32	getlocalip(void)
 					     sizeof(dmsg_rvc.bootfile));
 		return NetData.ipucast;
 	    }
+
 	}
 
 	kprintf("DHCP failed to get a response\n");
