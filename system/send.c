@@ -29,6 +29,9 @@ syscall	send(
 	prptr->prmsg = msg;		/* Deliver message		*/
 	prptr->prhasmsg = TRUE;		/* Indicate message is waiting	*/
 
+	/* Check to make sure receiver is no longer running on a core */
+	while (prptr->prcpu != CPU_NONE);
+
 	/* If recipient waiting or in timed-wait make it ready */
 
 	if (prptr->prstate == PR_RECV) {

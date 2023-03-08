@@ -24,9 +24,11 @@ umsg32	receive(void)
 
 	if (prptr->prhasmsg == FALSE) {
 		prptr->prstate = PR_RECV;
+		xsec_end(mask, prptr->prlock);
 		resched();		/* Block until message arrives	*/
 	}
 
+	mask = xsec_beg(prptr->prlock);
 	msg = prptr->prmsg;		/* Retrieve message		*/
 	prptr->prhasmsg = FALSE;	/* Reset message flag		*/
 	

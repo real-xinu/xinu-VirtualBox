@@ -34,8 +34,11 @@ status	ready(
 	insert(pid, readylist, prptr->prprio);
 
 	/* Enforce scheduling invariant	*/
-	resched();
-	bcastipi(IPI_RESCHED);
+	cid32 new_core = get_resched_core(pid);
+	if (new_core != CPU_NONE) {
+		sendipi(IPI_RESCHED, new_core);
+	}
+	//We no longer broadcast to all CPUS - just send to the one with the lowest priority process (if any is available) or do nothing (which will happen if all CPUs are executing processes with higher priorities than this one)
 
 	xsec_endn(mask, 2, readylock, prptr->prlock);
 	return OK;

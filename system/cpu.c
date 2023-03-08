@@ -236,6 +236,36 @@ void suspend_handler (void) {
 }
 
 /*------------------------------------------------------------------------
+ * get_resched_core  -  Get the core to send an IPI to, given a new process PID
+ *------------------------------------------------------------------------
+ */
+cid32 get_resched_core (pid32 pid) {
+	//Find lowest priority process running on any CPU. If it is < proctab[pid].prprio, return that core.
+	int32 i;
+	cid32 lowest = -1;
+	int32 lowest_prio = 999999;
+	for (i = 0; i < NCPU; ++i) {
+		pid32 curpid = cputab[i].cpid;
+		if (curpid && proctab[curpid].prprio < lowest_prio) {
+			lowest_prio = proctab[curpid].prprio;
+			lowest = i;
+		}
+		//A CPU is not currently running anything
+		else if (!curpid) {
+			lowest_prio = -1;
+			lowest = i;
+			return lowest;
+		}
+	}
+
+	if (lowest_prio <= proctab[pid].prprio) {
+		return lowest;
+	}
+	return CPU_NONE;
+}
+
+
+/*------------------------------------------------------------------------
  * cpudisp  -  Dispatcher function for inter-processor interrupt
  *------------------------------------------------------------------------
  */
@@ -291,7 +321,7 @@ status sendipi(
     )
 {
 	lapic->icr_high = (core << 24) & 0xFF000000;
-	lapic->icr_low = 0x00004000 | ipi;
+	lapic->icr_low = 0x000C4000 | ipi;
     return OK;
 }
 

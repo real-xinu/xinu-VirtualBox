@@ -40,6 +40,7 @@ umsg32	recvtime(
 		resched();
 	}
 
+	mask = xsec_beg(prptr->prlock);
 	/* Either message arrived or timer expired */
 
 	if (prptr->prhasmsg) {
@@ -48,6 +49,7 @@ umsg32	recvtime(
 	} else {
 		msg = TIMEOUT;
 	}
+	xsec_end(mask, prptr->prlock);
 
 	xsec_end(mask, sleepqlock);
 	return msg;

@@ -40,7 +40,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	/* Force context switch to highest priority ready process */
 	prevpid = currpid;						/* record previous process		*/
 	currpid = dequeue(readylist);			/* get and record new process	*/
-	ptnew = &proctab[currpid];		
+	ptnew = &proctab[currpid];
 	lock(ptnew->prlock);					/* unlocked in ctxsw_ret */
 	ptnew->prstate = PR_CURR;				/* set new process as current	*/
 	cputab[getcid()].preempt = QUANTUM;		/* Reset time slice for process	*/

@@ -51,6 +51,7 @@ extern	cid32	getcid(void);
 extern	status	sendipi(int32 sgi, cid32 core);
 extern	status	bcastipi(int32 sgi);
 extern	status	set_ipi_handler(uint32, uint32);
+extern	cid32	get_resched_core(pid32 pid);
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
