@@ -25,7 +25,7 @@ shellcmd xsh_demo(int nargs, char *args[])
     /* sanity check */
     switch (nargs) {
         case 2:
-            sleep_time = (int)(args[1] - 0x30);
+            sleep_time = atoi(args[1]);
             /* fall through */
         case 1:
             break;
