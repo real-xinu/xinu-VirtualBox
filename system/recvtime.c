@@ -36,11 +36,11 @@ umsg32	recvtime(
 			return SYSERR;
 		}
 		prptr->prstate = PR_RECTIM;
-		xsec_end(mask, prptr->prlock);
+		xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 		resched();
 	}
 
-	mask = xsec_beg(prptr->prlock);
+	mask = xsec_begn(2, sleepqlock, prptr->prlock);
 	/* Either message arrived or timer expired */
 
 	if (prptr->prhasmsg) {
@@ -49,8 +49,7 @@ umsg32	recvtime(
 	} else {
 		msg = TIMEOUT;
 	}
-	xsec_end(mask, prptr->prlock);
 
-	xsec_end(mask, sleepqlock);
+	xsec_endn(mask, 2, sleepqlock, prptr->prlock);
 	return msg;
 }
