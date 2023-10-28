@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 
-lid32 buftablock;
+extern lid32 buftablock;
 
 /*------------------------------------------------------------------------
  *  mkbufpool  -  Allocate memory for a buffer pool and link the buffers

@@ -17,8 +17,9 @@ void	ttyhandle_in (
 {
 	char	ch;			/* Next char from device	*/
 	int32	avail;			/* Chars available in buffer	*/
+	intmask mask;
 
-	lock(typtr->tylock);	/* exclusive access to control block */
+	mask = xsec_beg(typtr->tylock);	/* exclusive access to control block */
 
 	ch = io_inb(csrptr->buffer);
 
@@ -33,7 +34,7 @@ void	ttyhandle_in (
 
 	if (typtr->tyimode == TY_IMRAW) {
 		if (avail >= TY_IBUFLEN) { /* No space => ignore input	*/
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -49,7 +50,7 @@ void	ttyhandle_in (
 
 		/* Signal input semaphore and return */
 		signal(typtr->tyisem);
-		unlock(typtr->tylock);
+		xsec_end(mask, typtr->tylock);
 		return;
 	}
 
@@ -65,11 +66,11 @@ void	ttyhandle_in (
 		if (ch == typtr->tyostart) {	    /* ^Q starts output	*/
 			typtr->tyoheld = FALSE;
 			ttykickout(csrptr);
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		} else if (ch == typtr->tyostop) {  /* ^S stops	output	*/
 			typtr->tyoheld = TRUE;
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 	}
@@ -95,7 +96,7 @@ void	ttyhandle_in (
 			}
 			signal(typtr->tyisem);
 		}
-		unlock(typtr->tylock);
+		xsec_end(mask, typtr->tylock);
 		return;
 
 	} else {	/* Just cooked mode (see common code above) */
@@ -110,7 +111,7 @@ void	ttyhandle_in (
 			typtr->tyicursor = 0;
 			eputc(TY_RETURN, typtr, csrptr);
 			eputc(TY_NEWLINE, typtr, csrptr);
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -122,7 +123,7 @@ void	ttyhandle_in (
 				typtr->tyicursor--;
 				erase1(typtr, csrptr);
 			}
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -139,7 +140,7 @@ void	ttyhandle_in (
 			/* Make entire line (plus \n or \r) available */
 			signaln(typtr->tyisem, typtr->tyicursor + 1);
 			typtr->tyicursor = 0; 	/* Reset for next line	*/
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -152,7 +153,7 @@ void	ttyhandle_in (
 		}
 		if ((avail + typtr->tyicursor) >= TY_IBUFLEN-1) {
 			eputc(typtr->tyifullc, typtr, csrptr);
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -164,12 +165,12 @@ void	ttyhandle_in (
 				echoch(ch, typtr, csrptr);
 			}
 			if (typtr->tyicursor != 0) {
-				unlock(typtr->tylock);
+				xsec_end(mask, typtr->tylock);
 				return;
 			}
 			*typtr->tyitail++ = ch;
 			signal(typtr->tyisem);
-			unlock(typtr->tylock);
+			xsec_end(mask, typtr->tylock);
 			return;
 		}
 
@@ -190,7 +191,7 @@ void	ttyhandle_in (
 		if (typtr->tyitail >= &typtr->tyibuff[TY_IBUFLEN]) {
 			typtr->tyitail = typtr->tyibuff;
 		}
-		unlock(typtr->tylock);
+		xsec_end(mask, typtr->tylock);
 		return;
 	}
 }
