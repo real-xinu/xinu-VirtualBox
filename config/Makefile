@@ -2,14 +2,10 @@
 # Make the Xinu configuration program
 #
 
-COMPILER_ROOT	=	/usr/bin/
-
-CC	= ${COMPILER_ROOT}gcc
-LEX	= ${COMPILER_ROOT}flex
-YACC	= ${COMPILER_ROOT}bison -y	# Flag enables yacc-compatible filenames
+CC	= gcc
+LEX	= flex
+YACC	= bison -y	# Flag enables yacc-compatible filenames
 CFLAGS	= 
-LFLAGS	= -lfl
-
 
 #
 # Name of the configuration program
@@ -20,17 +16,14 @@ CONFIG	= config
 all:		conf.h conf.c
 
 ${CONFIG}:	lex.yy.c y.tab.c
-		$(CC) ${CFLAGS} -o $@ y.tab.c ${LFLAGS}
+		$(CC) -o $@ y.tab.c ${LFLAGS} -lfl
 
 lex.yy.c:	config.l
 		$(LEX) config.l
 
 y.tab.c:	config.y
-		@(if test "x$$LOGNAME" = "xxinu"; then			\
-		       echo "extern	size_t	yyleng;";		\
-		  else echo "extern	int	yyleng;"; fi) > .yyleng
 		$(YACC) config.y
-	
+
 clean:
 		rm -f config lex.yy.c y.tab.c
 
